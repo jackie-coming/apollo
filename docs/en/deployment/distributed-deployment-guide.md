@@ -66,6 +66,8 @@ Apollo currently supports the following environments.
 
 > If you want to add custom environment names, you can refer to [How to add new environments by Portal Console](en/faq/common-issues-in-deployment-and-development-phase?id=_4-how-to-add-environment-by-portal-console) for the specific steps.
 
+> Please note, if your custom environment name is "PROD", it will be forcibly converted to "PRO". Similarly, if the environment name is "FWS", it will be forcibly converted to "FAT".
+
 You can refer to [deployment-architecture](en/deployment/deployment-architecture.md)
 
 
@@ -131,7 +133,7 @@ EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
 
 ### 1.4.4 Specifying apollo-configservice address directly
 
-If Apollo is deployed on the public cloud and the local development environment cannot connect, but you need to do development testing, the client can upgrade to version 0.11.0 and above, and then configure [Skip Apollo Meta Server service discovery](en/usage/java-sdk-user-guide?id=_1222-skip-apollo-meta-server-service-discovery)
+If Apollo is deployed on the public cloud and the local development environment cannot connect, but you need to do development testing, the client can upgrade to version 0.11.0 and above, and then configure [Skip Apollo Meta Server service discovery](en/client/java-sdk-user-guide?id=_1222-skip-apollo-meta-server-service-discovery)
 
 ### 1.4.5 Network Configuration
 
@@ -217,12 +219,12 @@ You can choose to create it by manually importing SQL or by automatically import
 
 #### 2.1.1.1 Manual SQL Import
 
-You can import [apolloportaldb.sql](https://github.com/apolloconfig/apollo/blob/master/scripts/sql/apolloportaldb.sql) through various MySQL clients.
+You can import [apolloportaldb.sql](https://github.com/apolloconfig/apollo/blob/master/scripts/sql/profiles/mysql-default/apolloportaldb.sql) through various MySQL clients.
 
 Using the native MySQL client as an example.
 
 ```sql
-source /your_local_path/scripts/sql/apolloportaldb.sql
+source /your_local_path/scripts/sql/profiles/mysql-default/apolloportaldb.sql
 ```
 
 #### 2.1.1.2 Created via Flyway import SQL
@@ -252,12 +254,12 @@ You can choose to create it by manually importing SQL or automatically importing
 
 #### 2.1.2.1 Importing SQL Manually
 
-You can import [apolloconfigdb.sql](https://github.com/apolloconfig/apollo/blob/master/scripts/sql/apolloconfigdb.sql) through various MySQL clients.
+You can import [apolloconfigdb.sql](https://github.com/apolloconfig/apollo/blob/master/scripts/sql/profiles/mysql-default/apolloconfigdb.sql) through various MySQL clients.
 
 Using the native MySQL client as an example.
 
 ```sql
-source /your_local_path/scripts/sql/apolloconfigdb.sql
+source /your_local_path/scripts/sql/profiles/mysql-default/apolloconfigdb.sql
 ```
 
 #### 2.1.2.2 SQL import via Flyway
@@ -515,7 +517,7 @@ export JAVA_OPTS="-server -Xms6144m -Xmx6144m -Xss256k -XX:MetaspaceSize=128m -X
 
 > Note 2: To adjust the log output path of the service, you can modify `LOG_DIR` in scripts/startup.sh and apollo-configservice.conf.
 
-> Note 3: To adjust the listening port of the service, you can modify the `SERVER_PORT` in scripts/startup.sh. In addition, apollo-configservice also assumes the responsibility of meta server. If you want to modify the port, pay attention to the `eureka.service.url` configuration item in the ApolloConfigDB.ServerConfig table and the meta server information used in apollo-portal and apollo-client. For details, see: [2.2.1.1.2.4 Configuring the meta service information of apollo-portal](en/deployment/distributed-deployment-guide?id=_221124-configuring-apollo-portal39s-meta-service-information) and [1.2.2 Apollo Meta Server](en/usage/java-sdk-user-guide?id=_122-apollo-meta-server).
+> Note 3: To adjust the listening port of the service, you can modify the `SERVER_PORT` in scripts/startup.sh. In addition, apollo-configservice also assumes the responsibility of meta server. If you want to modify the port, pay attention to the `eureka.service.url` configuration item in the ApolloConfigDB.ServerConfig table and the meta server information used in apollo-portal and apollo-client. For details, see: [2.2.1.1.2.4 Configuring the meta service information of apollo-portal](en/deployment/distributed-deployment-guide?id=_221124-configuring-apollo-portal39s-meta-service-information) and [1.2.2 Apollo Meta Server](en/client/java-sdk-user-guide?id=_122-apollo-meta-server).
 
 > Note 4: If the eureka.service.url of ApolloConfigDB.ServerConfig is only configured with the currently starting machine, the eureka registration failure information will be output in the log during the process of starting apollo-configservice, such as `com.sun.jersey .api.client.ClientHandlerException: java.net.ConnectException: Connection refused`. It should be noted that this is the expected situation, because apollo-configservice needs to register the service with the Meta Server (itself), but because it has not yet woken up during the startup process, it will report this error. The retry action will be performed later, so the registration will be normal after the service is up.
 
@@ -767,9 +769,9 @@ apollo.service.registry.cluster=same name with apollo Cluster
 ```
 
 2. (optional) If you want to customize Config Service and Admin Service's uri for Client, 
-for example when deploying on the intranet, 
-if you don't want to expose the intranet ip, 
-you can add a property in `config/application-github.properties` of the Config Service and Admin Service installation package
+   for example when deploying on the intranet, 
+   if you don't want to expose the intranet ip, 
+   you can add a property in `config/application-github.properties` of the Config Service and Admin Service installation package
     ```properties
     apollo.service.registry.uri=http://your-ip-or-domain:${server.port}/
     ```
@@ -1341,7 +1343,7 @@ After the modification needs to reboot to take effect.
 
 >Note 1: A set of Portal can manage multiple environments, but each environment needs to deploy a separate set of Config Service, Admin Service and ApolloConfigDB, please refer to: [2.1.2 Creating ApolloConfigDB](en/deployment/distributed-deployment-guide?id=_212-creating-apolloconfigdb), [3.2 Adjusting ApolloConfigDB configuration](en/deployment/distributed-deployment-guide?id=_32-adjusting-apolloconfigdb-configuration), [2.2.1.1.2 Configuring database connection information](en/deployment/distributed-deployment-guide?id=_22112-configuring-database-connection-information), and if you are adding an environment to Apollo Configuration Center that has been running for a while, don't forget to refer to [2.1.2.4 Importing ApolloConfigDB project data from another environment](en/deployment/distributed-deployment-guide?id=_2124-importing-apolloconfigdb-project-data-from-another-environment) to do the initialization of the new environment.
 
->Note 2: Adding the environment to the database only does not work, you also need to add the meta server address corresponding to the new environment for apollo-portal, refer to: [2.2.1.1.2.4 Configuring the meta service information of apollo-portal](en/deployment/distributed-deployment-guide?id=_221124-configuring-apollo-portal39s-meta-service-information). portal's meta-service information). apollo-client also needs to be configured accordingly when used in a new environment, refer to: [1.2.2 Apollo Meta Server](en/usage/java-sdk-user-guide?id=_122-apollo-meta-server).
+>Note 2: Adding the environment to the database only does not work, you also need to add the meta server address corresponding to the new environment for apollo-portal, refer to: [2.2.1.1.2.4 Configuring the meta service information of apollo-portal](en/deployment/distributed-deployment-guide?id=_221124-configuring-apollo-portal39s-meta-service-information). portal's meta-service information). apollo-client also needs to be configured accordingly when used in a new environment, refer to: [1.2.2 Apollo Meta Server](en/client/java-sdk-user-guide?id=_122-apollo-meta-server).
 
 >Note 3: If you wish to add a custom environment name, you can refer to [Portal How to add environment](en/faq/common-issues-in-deployment-and-development-phase?id=_4-how-to-add-environment-by-portal-console) .
 
@@ -1444,6 +1446,14 @@ The format is json, as follows.
 The default is true, which makes it easy to quickly search for configurations by configuration item
 
 If set to false, this feature is disabled
+
+### 3.1.14 apollo.portal.search.perEnvMaxResults - set the Administrator Tool-Global Search for Value function's maximum number of search results for a single individual environment 
+
+> For versions 2.4.0 and above
+
+Default is 200, which means that each environment will return up to 200 results in a single search operation.
+
+Modifying this parameter may affect the performance of the search function, so before modifying it, you should conduct sufficient testing and adjust the value of `apollo.portal.search.perEnvMaxResults` appropriately according to the actual business requirements and system resources to balance the performance and the number of search results.
 
 ## 3.2 Adjusting ApolloConfigDB configuration
 

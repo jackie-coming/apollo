@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Apollo Authors
+ * Copyright 2024 Apollo Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,11 @@
  */
 package com.ctrip.framework.apollo.portal.spi.defaultimpl;
 
+import com.ctrip.framework.apollo.audit.annotation.ApolloAuditLog;
+import com.ctrip.framework.apollo.audit.annotation.ApolloAuditLogDataInfluence;
+import com.ctrip.framework.apollo.audit.annotation.ApolloAuditLogDataInfluenceTable;
+import com.ctrip.framework.apollo.audit.annotation.ApolloAuditLogDataInfluenceTableField;
+import com.ctrip.framework.apollo.audit.annotation.OpType;
 import com.ctrip.framework.apollo.openapi.repository.ConsumerRoleRepository;
 import com.ctrip.framework.apollo.portal.component.config.PortalConfig;
 import com.ctrip.framework.apollo.portal.entity.bo.UserInfo;
@@ -36,6 +41,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
@@ -107,6 +113,7 @@ public class DefaultRolePermissionService implements RolePermissionService {
      * @return the users assigned roles
      */
     @Transactional
+    @ApolloAuditLog(type = OpType.CREATE, name = "Auth.assignRoleToUsers")
     public Set<String> assignRoleToUsers(String roleName, Set<String> userIds,
                                          String operatorUserId) {
         Role role = findRoleByRoleName(roleName);
@@ -136,7 +143,14 @@ public class DefaultRolePermissionService implements RolePermissionService {
      * Remove role from users
      */
     @Transactional
-    public void removeRoleFromUsers(String roleName, Set<String> userIds, String operatorUserId) {
+    @ApolloAuditLog(type = OpType.DELETE, name = "Auth.removeRoleFromUsers")
+    public void removeRoleFromUsers(
+        @ApolloAuditLogDataInfluence
+        @ApolloAuditLogDataInfluenceTable(tableName = "UserRole")
+        @ApolloAuditLogDataInfluenceTableField(fieldName = "RoleName") String roleName,
+        @ApolloAuditLogDataInfluence
+        @ApolloAuditLogDataInfluenceTable(tableName = "UserRole")
+        @ApolloAuditLogDataInfluenceTableField(fieldName = "UserId") Set<String> userIds, String operatorUserId) {
         Role role = findRoleByRoleName(roleName);
         Preconditions.checkState(role != null, "Role %s doesn't exist!", roleName);
 
@@ -273,6 +287,7 @@ public class DefaultRolePermissionService implements RolePermissionService {
     @Transactional
     @Override
     public void deleteRolePermissionsByAppId(String appId, String operator) {
+        appId = EscapeCharacter.DEFAULT.escape(appId);
         List<Long> permissionIds = permissionRepository.findPermissionIdsByAppId(appId);
 
         if (!permissionIds.isEmpty()) {
@@ -300,6 +315,7 @@ public class DefaultRolePermissionService implements RolePermissionService {
     @Transactional
     @Override
     public void deleteRolePermissionsByAppIdAndNamespace(String appId, String namespaceName, String operator) {
+        appId = EscapeCharacter.DEFAULT.escape(appId);
         List<Long> permissionIds = permissionRepository.findPermissionIdsByAppIdAndNamespace(appId, namespaceName);
 
         if (!permissionIds.isEmpty()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Apollo Authors
+ * Copyright 2024 Apollo Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,8 @@ public class PortalConfig extends RefreshableConfig {
     return envs;
   }
 
+  public int getPerEnvSearchMaxResults() {return getIntProperty("apollo.portal.search.perEnvMaxResults", 200);}
+
   /**
    * @return the relationship between environment and its meta server. empty if meet exception
    */
@@ -167,6 +169,18 @@ public class PortalConfig extends RefreshableConfig {
 
   public int readTimeout() {
     return getIntProperty("api.readTimeout", 10000);
+  }
+
+  public int connectionTimeToLive() {
+    return getIntProperty("api.connectionTimeToLive", -1);
+  }
+
+  public int connectPoolMaxTotal() {
+    return getIntProperty("api.pool.max.total", 20);
+  }
+
+  public int connectPoolMaxPerRoute() {
+    return getIntProperty("api.pool.max.per.route", 2);
   }
 
   public List<Organization> organizations() {

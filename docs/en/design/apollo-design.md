@@ -130,7 +130,7 @@ Why do we use Eureka as a service registry instead of the traditional zk and etc
 ### 1.3.2 Admin Service
 
 * Provide configuration management interface
-* Provides interfaces for configuration modification, publishing, etc.
+* Provides interfaces for configuration modification, publishing, retrieval, etc.
 * Interface service object is Portal
 
 ### 1.3.3 Meta Server
@@ -320,7 +320,7 @@ The related code can be found in [PropertySourcesProcessor](https://github.com/a
 <tr>
 <td>All Config Services offline</td>
 <td>Client cannot read the latest configuration, Portal has no effect</td>
-<td>When the client restarts, the local cache configuration file can be read. If it is a newly expanded machine, you can obtain the cached configuration file from other machines. For details, please refer to <a href='/#/en/usage/java-sdk-user-guide?id=_123-local-cache-path'>Java Client Usage Guide - 1.2.3 Local Cache Path</a>
+<td>When the client restarts, the local cache configuration file can be read. If it is a newly expanded machine, you can obtain the cached configuration file from other machines. For details, please refer to <a href='/#/en/client/java-sdk-user-guide?id=_123-local-cache-path'>Java Client Usage Guide - 1.2.3 Local Cache Path</a>
 </td>
 <td></td>
 </tr>

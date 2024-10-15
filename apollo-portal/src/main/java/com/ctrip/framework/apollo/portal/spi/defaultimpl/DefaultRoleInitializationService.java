@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Apollo Authors
+ * Copyright 2024 Apollo Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,10 +83,10 @@ public class DefaultRoleInitializationService implements RoleInitializationServi
     //assign modify、release namespace role to user
     rolePermissionService.assignRoleToUsers(
         RoleUtils.buildNamespaceRoleName(appId, ConfigConsts.NAMESPACE_APPLICATION, RoleType.MODIFY_NAMESPACE),
-        Sets.newHashSet(operator), operator);
+        Sets.newHashSet(app.getOwnerName()), operator);
     rolePermissionService.assignRoleToUsers(
         RoleUtils.buildNamespaceRoleName(appId, ConfigConsts.NAMESPACE_APPLICATION, RoleType.RELEASE_NAMESPACE),
-        Sets.newHashSet(operator), operator);
+        Sets.newHashSet(app.getOwnerName()), operator);
 
   }
 

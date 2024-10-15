@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2023 Apollo Authors
+# Copyright 2024 Apollo Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 # description               show how to use openapi.sh
 # author                    wxq
 # date                      2021-09-12
-# Chinese reference website https://www.apolloconfig.com/#/zh/usage/apollo-open-api-platform
-# English reference website https://www.apolloconfig.com/#/en/usage/apollo-open-api-platform
+# Chinese reference website https://www.apolloconfig.com/#/zh/portal/apollo-open-api-platform
+# English reference website https://www.apolloconfig.com/#/en/portal/apollo-open-api-platform
 
 # export global varialbes
 export APOLLO_PORTAL_ADDRESS=http://106.54.227.205
