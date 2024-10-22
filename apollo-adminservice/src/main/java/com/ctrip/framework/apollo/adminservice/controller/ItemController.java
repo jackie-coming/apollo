@@ -210,6 +210,7 @@ public class ItemController {
     return new PageDTO<>(pageItemInfoDTO.getContent(), limit, pageItemInfoDTO.getTotalElements());
   }
 
+
   @GetMapping("/items/{itemId}")
   public ItemDTO get(@PathVariable("itemId") long itemId) {
     Item item = itemService.findOne(itemId);
