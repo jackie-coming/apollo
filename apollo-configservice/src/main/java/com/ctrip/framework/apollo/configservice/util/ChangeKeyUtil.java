@@ -14,33 +14,26 @@
  * limitations under the License.
  *
  */
-package com.ctrip.framework.apollo.portal.entity.bo;
+package com.ctrip.framework.apollo.configservice.util;
 
-import com.ctrip.framework.apollo.common.dto.ReleaseDTO;
-import com.ctrip.framework.apollo.common.entity.KVEntity;
+import com.ctrip.framework.apollo.common.entity.AppNamespace;
+import com.ctrip.framework.apollo.configservice.service.AppNamespaceServiceWithCache;
+import org.springframework.stereotype.Component;
 
-import java.util.Set;
+/**
+ * @author Jason Song(song_s@ctrip.com)
+ */
 
-public class ReleaseBO {
+public class ChangeKeyUtil {
 
-  private ReleaseDTO baseInfo;
+  public String getChangeKey(Long releaseId,Long releaseId2) {
+   //按照大+小 拼接
+    if(releaseId>releaseId2){
+      return releaseId+"_"+releaseId2;
+    }else{
+      return releaseId2+"_"+releaseId;
+    }
 
-  private Set<KVEntity> items;
-
-  public ReleaseDTO getBaseInfo() {
-    return baseInfo;
-  }
-
-  public void setBaseInfo(ReleaseDTO baseInfo) {
-    this.baseInfo = baseInfo;
-  }
-
-  public Set<KVEntity> getItems() {
-    return items;
-  }
-
-  public void setItems(Set<KVEntity> items) {
-    this.items = items;
   }
 
 }

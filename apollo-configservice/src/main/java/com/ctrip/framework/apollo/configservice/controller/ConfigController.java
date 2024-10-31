@@ -21,6 +21,7 @@ import com.ctrip.framework.apollo.common.entity.AppNamespace;
 import com.ctrip.framework.apollo.common.utils.WebUtils;
 import com.ctrip.framework.apollo.configservice.service.AppNamespaceServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigService;
+import com.ctrip.framework.apollo.configservice.service.config.IncrementalSyncConfigService;
 import com.ctrip.framework.apollo.configservice.util.InstanceConfigAuditUtil;
 import com.ctrip.framework.apollo.configservice.util.NamespaceUtil;
 import com.ctrip.framework.apollo.core.ConfigConsts;
@@ -55,6 +56,8 @@ import java.util.stream.Collectors;
 public class ConfigController {
 
   private final ConfigService configService;
+  private final IncrementalSyncConfigService incrementalSyncConfigService;
+
   private final AppNamespaceServiceWithCache appNamespaceService;
   private final NamespaceUtil namespaceUtil;
   private final InstanceConfigAuditUtil instanceConfigAuditUtil;
@@ -65,11 +68,13 @@ public class ConfigController {
 
   public ConfigController(
       final ConfigService configService,
+      final IncrementalSyncConfigService incrementalSyncConfigService,
       final AppNamespaceServiceWithCache appNamespaceService,
       final NamespaceUtil namespaceUtil,
       final InstanceConfigAuditUtil instanceConfigAuditUtil,
       final Gson gson) {
     this.configService = configService;
+    this.incrementalSyncConfigService = incrementalSyncConfigService;
     this.appNamespaceService = appNamespaceService;
     this.namespaceUtil = namespaceUtil;
     this.instanceConfigAuditUtil = instanceConfigAuditUtil;
@@ -145,6 +150,11 @@ public class ConfigController {
 
     ApolloConfig apolloConfig = new ApolloConfig(appId, appClusterNameLoaded, originalNamespace,
         mergedReleaseKey);
+    //增量配置开关
+    if(true){
+      apolloConfig.setConfigurations(incrementalSyncConfigService.findLatestActiveChangeConfigurations
+              (appId, clusterName, originalNamespace, clientMessages, -1));
+    }
     apolloConfig.setConfigurations(mergeReleaseConfigurations(releases));
 
     Tracer.logEvent("Apollo.Config.Found", assembleKey(appId, appClusterNameLoaded,

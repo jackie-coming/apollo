@@ -14,18 +14,18 @@
  * limitations under the License.
  *
  */
-package com.ctrip.framework.apollo.portal.entity.vo;
+package com.ctrip.framework.apollo.configservice.dto;
 
 import com.ctrip.framework.apollo.common.entity.EntityPair;
 import com.ctrip.framework.apollo.common.entity.KVEntity;
-import com.ctrip.framework.apollo.portal.enums.ChangeType;
+import com.ctrip.framework.apollo.configservice.enums.ChangeType;
 
-public class Change {
+public class ChangeDTO {
 
   private ChangeType type;
   private EntityPair<KVEntity> entity;
 
-  public Change(ChangeType type, EntityPair<KVEntity> entity) {
+  public ChangeDTO(ChangeType type, EntityPair<KVEntity> entity) {
     this.type = type;
     this.entity = entity;
   }

@@ -56,20 +56,20 @@ import org.springframework.util.CollectionUtils;
 public class ConfigServiceWithCache extends AbstractConfigService {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithCache.class);
   private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES = 60;//1 hour
-  private static final String TRACER_EVENT_CACHE_INVALIDATE = "ConfigCache.Invalidate";
-  private static final String TRACER_EVENT_CACHE_LOAD = "ConfigCache.LoadFromDB";
-  private static final String TRACER_EVENT_CACHE_LOAD_ID = "ConfigCache.LoadFromDBById";
-  private static final String TRACER_EVENT_CACHE_GET = "ConfigCache.Get";
-  private static final String TRACER_EVENT_CACHE_GET_ID = "ConfigCache.GetById";
+  protected static final String TRACER_EVENT_CACHE_INVALIDATE = "ConfigCache.Invalidate";
+  protected static final String TRACER_EVENT_CACHE_LOAD = "ConfigCache.LoadFromDB";
+  protected static final String TRACER_EVENT_CACHE_LOAD_ID = "ConfigCache.LoadFromDBById";
+  protected static final String TRACER_EVENT_CACHE_GET = "ConfigCache.Get";
+  protected static final String TRACER_EVENT_CACHE_GET_ID = "ConfigCache.GetById";
 
-  private final ReleaseService releaseService;
-  private final ReleaseMessageService releaseMessageService;
-  private final BizConfig bizConfig;
+  protected final ReleaseService releaseService;
+  protected final ReleaseMessageService releaseMessageService;
+  protected final BizConfig bizConfig;
   private final MeterRegistry meterRegistry;
 
-  private LoadingCache<String, ConfigCacheEntry> configCache;
+  protected LoadingCache<String, ConfigCacheEntry> configCache;
 
-  private LoadingCache<Long, Optional<Release>> configIdCache;
+  protected LoadingCache<Long, Optional<Release>> configIdCache;
 
   private ConfigCacheEntry nullConfigCacheEntry;
 
@@ -229,7 +229,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
 
   }
 
-  private static class ConfigCacheEntry {
+  protected static class ConfigCacheEntry {
     private final long notificationId;
     private final Release release;
 
@@ -239,6 +239,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
     }
 
     public long getNotificationId() {
+
       return notificationId;
     }
 

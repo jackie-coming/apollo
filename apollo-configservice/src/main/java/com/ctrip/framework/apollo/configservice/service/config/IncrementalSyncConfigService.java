@@ -14,31 +14,21 @@
  * limitations under the License.
  *
  */
-package com.ctrip.framework.apollo.portal.entity.bo;
+package com.ctrip.framework.apollo.configservice.service.config;
 
-public class KVEntity {
+import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
 
-  private String key;
-  private String value;
+import java.util.Map;
 
-  public KVEntity(String key, String value) {
-    this.key = key;
-    this.value = value;
-  }
+/**
+ * @author Jason Song(song_s@ctrip.com)
+ */
+public interface IncrementalSyncConfigService {
 
-  public String getKey() {
-    return key;
-  }
-
-  public void setKey(String key) {
-    this.key = key;
-  }
-
-  public String getValue() {
-    return value;
-  }
-
-  public void setValue(String value) {
-    this.value = value;
-  }
+  /**
+   * Load config
+   *
+   */
+   Map<String,String> findLatestActiveChangeConfigurations(String appId, String clusterName, String namespaceName,
+                                                           ApolloNotificationMessages clientMessages, long historyReleaseId);
 }

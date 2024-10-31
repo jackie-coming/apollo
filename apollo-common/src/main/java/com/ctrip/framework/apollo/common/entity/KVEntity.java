@@ -14,33 +14,31 @@
  * limitations under the License.
  *
  */
-package com.ctrip.framework.apollo.portal.entity.bo;
+package com.ctrip.framework.apollo.common.entity;
 
-import com.ctrip.framework.apollo.common.dto.ReleaseDTO;
-import com.ctrip.framework.apollo.common.entity.KVEntity;
+public class KVEntity {
 
-import java.util.Set;
+  private String key;
+  private String value;
 
-public class ReleaseBO {
-
-  private ReleaseDTO baseInfo;
-
-  private Set<KVEntity> items;
-
-  public ReleaseDTO getBaseInfo() {
-    return baseInfo;
+  public KVEntity(String key, String value) {
+    this.key = key;
+    this.value = value;
   }
 
-  public void setBaseInfo(ReleaseDTO baseInfo) {
-    this.baseInfo = baseInfo;
+  public String getKey() {
+    return key;
   }
 
-  public Set<KVEntity> getItems() {
-    return items;
+  public void setKey(String key) {
+    this.key = key;
   }
 
-  public void setItems(Set<KVEntity> items) {
-    this.items = items;
+  public String getValue() {
+    return value;
   }
 
+  public void setValue(String value) {
+    this.value = value;
+  }
 }

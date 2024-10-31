@@ -80,7 +80,7 @@ public class ConfigControllerTest {
   @Before
   public void setUp() throws Exception {
     configController = spy(new ConfigController(
-        configService, appNamespaceService, namespaceUtil, instanceConfigAuditUtil, gson
+        configService,null, appNamespaceService, namespaceUtil, instanceConfigAuditUtil, gson
     ));
 
     someAppId = "1";
