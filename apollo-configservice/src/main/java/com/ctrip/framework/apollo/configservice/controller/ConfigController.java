@@ -151,9 +151,16 @@ public class ConfigController {
     ApolloConfig apolloConfig = new ApolloConfig(appId, appClusterNameLoaded, originalNamespace,
         mergedReleaseKey);
     //增量配置开关
-    if(true){
-      apolloConfig.setConfigurations(incrementalSyncConfigService.findLatestActiveChangeConfigurations
-              (appId, clusterName, originalNamespace, clientMessages, -1));
+    if(false){
+      Map<String,String> changeConfigurations =incrementalSyncConfigService.findLatestActiveChangeConfigurations(appId, clusterName, originalNamespace, clientMessages, -1);
+      //这里不为空 命中缓存增量配置
+      if(changeConfigurations.size()!=0){
+        apolloConfig.setConfigurations(changeConfigurations);
+        Tracer.logEvent("Apollo.Config.Found", assembleKey(appId, appClusterNameLoaded,
+                                                           originalNamespace, dataCenter));
+        return apolloConfig;
+      }
+
     }
     apolloConfig.setConfigurations(mergeReleaseConfigurations(releases));
 

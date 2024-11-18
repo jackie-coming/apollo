@@ -36,12 +36,10 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -49,14 +47,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
 /**
- * config service with guava cache
+ * config service with change cache
  *
- * @author Jason Song(song_s@ctrip.com)
+ * @author Jason
  */
 public class ConfigServiceWithChangeCache extends ConfigServiceWithCache implements IncrementalSyncConfigService {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
@@ -65,11 +62,13 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
   private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES = 60;
 
+  //todo 基于缓存自身的能力来完成
+  //缓存里面套缓存（有大小限制）
   private final Integer size=10;
 
   private LoadingCache<String, ConfigChangeCacheEntry> configChangeCache;
 
-  private LoadingCache<String, ConfigHistoriesCacheEntry> configHistoriesCache;
+  private ConfigHistories configHistories;
 
 
   public ConfigServiceWithChangeCache(final ReleaseService releaseService,
@@ -78,11 +77,11 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
                                       final BizConfig bizConfig,
                                       final MeterRegistry meterRegistry) {
     super(releaseService,releaseMessageService,grayReleaseRulesHolder,bizConfig,meterRegistry);
+    configHistories = new ConfigHistories();
   }
 
   @PostConstruct
   void initialize() {
-    buildConfigHistoriesCache();
     buildConfigChangeCache();
   }
 
@@ -99,17 +98,23 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
       if (bizConfig.isConfigServiceCacheKeyIgnoreCase()) {
         messageKey = messageKey.toLowerCase();
       }
-      configChangeCache.invalidate(messageKey);
-
-      //warm up the cache
-      configChangeCache.getUnchecked(messageKey);
+      updateConfigChangeCacheManager(messageKey);
     } catch (Throwable ex) {
       //ignore
     }
   }
+  private void updateConfigChangeCacheManager(String messageKey){
+    configCache.invalidate(messageKey);
+    configCache.getUnchecked(messageKey);
+
+    configHistories.addOne(messageKey);
+
+    configChangeCache.invalidate(messageKey);
+    configChangeCache.getUnchecked(messageKey);
+  }
   @Override
   public Map<String,String> findLatestActiveChangeConfigurations(String appId, String clusterName, String namespaceName,
-                                                                 ApolloNotificationMessages clientMessages, long historyReleaseId) {
+                                                                 ApolloNotificationMessages clientMessages, long historyNotificationId) {
     String messageKey = ReleaseMessageKeyGenerator.generate(appId, clusterName, namespaceName);
     String cacheKey = messageKey;
 
@@ -123,13 +128,13 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
     //cache is out-dated
     if (clientMessages != null && clientMessages.has(messageKey) &&
-            clientMessages.get(messageKey) > configChangeCacheEntry.getLatestRelease().getId()) {
+            clientMessages.get(messageKey) > configChangeCacheEntry.getNotificationId()) {
       //invalidate the cache and try to load from db again
-      configChangeCache.invalidate(cacheKey);
+      updateConfigChangeCacheManager(messageKey);
       configChangeCacheEntry = configChangeCache.getUnchecked(cacheKey);
     }
 
-    return configChangeCacheEntry.getConfigurationsByReleaseId(historyReleaseId);
+    return configChangeCacheEntry.getConfigurationsByNotificationId(historyNotificationId);
   }
 
   private void buildConfigChangeCache() {
@@ -146,24 +151,21 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
         if (CollectionUtils.isEmpty(namespaceInfo)) {
           Tracer.logError(
                   new IllegalArgumentException(String.format("Invalid cache load key %s", key)));
-          return new ConfigChangeCacheEntry(null);
+          return new ConfigChangeCacheEntry(null, null);
         }
 
         Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CACHE_LOAD, key);
         try {
-          configCache.invalidate(key);
           ConfigCacheEntry configCacheEntry=configCache.getUnchecked(key);
           Release latestRelease=configCacheEntry.getRelease();
+          long notificationId=configCacheEntry.getNotificationId();
 
-          ConfigChangeCacheEntry configChangeCacheEntry=new ConfigChangeCacheEntry(latestRelease);
+          ConfigChangeCacheEntry configChangeCacheEntry=new ConfigChangeCacheEntry(latestRelease,notificationId);
 
-          configHistoriesCache.invalidate(key);
-          ConfigHistoriesCacheEntry historiesCacheEntry = configHistoriesCache.getUnchecked(key);
 
-          Map<Long,Release> releaseHistories=historiesCacheEntry.getReleaseHistories();
-          Map<String,ReleaseCompareResultDTO> releaseChanges=new HashMap<>();
+          LoadingCache<Long, Release> releaseHistories = configHistories.getReleaseHistories(key);
 
-          for(Map.Entry<Long,Release> entry:releaseHistories.entrySet()){
+          for(Map.Entry<Long,Release> entry:releaseHistories.asMap().entrySet()){
             Release historiestrelease=entry.getValue();
             configChangeCacheEntry.addOne(historiestrelease);
           }
@@ -181,6 +183,7 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
     });
 
   }
+
   //base是旧的，toCompare是新的
   public ReleaseCompareResultDTO compare(Release baseRelease, Release toCompareRelease) {
     Map<String, String> baseReleaseConfiguration = baseRelease == null ? new HashMap<>() :
@@ -220,73 +223,23 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
     return compareResult;
   }
-  private void buildConfigHistoriesCache() {
-    CacheBuilder configCacheBuilder = CacheBuilder.newBuilder()
-        .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES, TimeUnit.MINUTES);
-    if (bizConfig.isConfigServiceCacheStatsEnabled()) {
-      configCacheBuilder.recordStats();
-    }
-
-    configHistoriesCache = configCacheBuilder.build(new CacheLoader<String, ConfigHistoriesCacheEntry>() {
-      @Override
-      public ConfigHistoriesCacheEntry load(String key) throws Exception {
-        List<String> namespaceInfo = ReleaseMessageKeyGenerator.messageToList(key);
-        if (CollectionUtils.isEmpty(namespaceInfo)) {
-          Tracer.logError(
-              new IllegalArgumentException(String.format("Invalid cache load key %s", key)));
-          return new ConfigHistoriesCacheEntry(Maps.newHashMap());
-        }
-
-        Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CACHE_LOAD, key);
-        try {
-          //TODO 配置化&& 配置过大 分页拉取
-          PageRequest page = PageRequest.of(0, 10);
-
-          List<Release> releases = releaseService.findActiveReleases(namespaceInfo.get(0), namespaceInfo.get(1),
-                                                                         namespaceInfo.get(2),page);
-
-          Map<Long,Release> releaseHistories= releases.stream().collect(Collectors.toMap(Release::getId, Function.identity()));
-
-          transaction.setStatus(Transaction.SUCCESS);
-
-
-          return new ConfigHistoriesCacheEntry(releaseHistories);
-        } catch (Throwable ex) {
-          transaction.setStatus(ex);
-          throw ex;
-        } finally {
-          transaction.complete();
-        }
-      }
-    });
-
-  }
-
-
-  private void addChange(String key,long historyReleaseId){
-    ConfigCacheEntry latestcacheEntry = configCache.getUnchecked(key);
-    ConfigHistoriesCacheEntry historiesCacheEntry = configHistoriesCache.getUnchecked(key);
-    ConfigChangeCacheEntry configChangeCacheEntry = configChangeCache.getUnchecked(key);
-    //从db读取releaseId
-    Release historyRelease=releaseService.findOne(historyReleaseId);
-    long removeReleaseId=0;
-    if(historiesCacheEntry.getReleaseHistories().size()>=size){
-      removeReleaseId=historiesCacheEntry.removeOne();
-    }
-    historiesCacheEntry.addOne(historyRelease);
-    configChangeCacheEntry.removeByReleaseId(removeReleaseId);
-    configChangeCacheEntry.addOne(historyRelease);
-
-  }
 
   private  class ConfigChangeCacheEntry {
     private final Map<String,ReleaseCompareResultDTO> releaseChanges;
 
     private final Release latestRelease;
-    public ConfigChangeCacheEntry(Release latestRelease) {
+
+    private final Long notificationId;
+    public ConfigChangeCacheEntry(Release latestRelease,Long notificationId) {
       this.releaseChanges = new HashMap<>();
       this.latestRelease=latestRelease;
+      this.notificationId=notificationId;
     }
+
+    public Long  getNotificationId() {
+      return notificationId;
+    }
+
 
     public Map<String,ReleaseCompareResultDTO> getReleaseChanges() {
       return releaseChanges;
@@ -298,62 +251,83 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
     private void addOne(Release historyRelease){
       ReleaseCompareResultDTO releaseCompareResultDTO;
-      if(latestRelease.getId()>=historyRelease.getId()) {
-        releaseCompareResultDTO=compare(historyRelease,latestRelease);
-      }else{
-        releaseCompareResultDTO=compare(latestRelease,historyRelease);
-      }
+      releaseCompareResultDTO=compare(latestRelease,historyRelease);
+
       releaseChanges.put(getChangeKey(historyRelease.getId()),releaseCompareResultDTO);
     }
-    private void removeByReleaseId(long historiesReleaseId){
-      releaseChanges.remove(getChangeKey(historiesReleaseId));
-    }
 
-    private Map<String,String> getConfigurationsByReleaseId(long historiesReleaseId){
-      ReleaseCompareResultDTO releaseCompareResultDTO=releaseChanges.get(getChangeKey(historiesReleaseId));
-      if(latestRelease.getId()>=historiesReleaseId){
-        return releaseCompareResultDTO.getSecondEntitys().stream().collect(Collectors.toMap(KVEntity::getKey, KVEntity::getValue));
+    private Map<String,String> getConfigurationsByNotificationId(long historyNotificationId){
+      String key=getChangeKey(historyNotificationId);
+      if(releaseChanges.get(key)==null){
+        //不会存在两个id一样，导致为空，上一层已经判断过了。
+        //所以这里的空只有没有命中缓存
+        return new HashMap<>();
       }
+      ReleaseCompareResultDTO releaseCompareResultDTO=releaseChanges.get(getChangeKey(historyNotificationId));
       return releaseCompareResultDTO.getFirstEntitys().stream().collect(Collectors.toMap(KVEntity::getKey, KVEntity::getValue));
     }
-    //getChangeKey historiestrelease和latestRelease.getId() 的id按照大-小的顺序 拼接得到新的changeKey
+
     private String getChangeKey(long historiesReleaseId){
-      String changeKey;
-      if(historiesReleaseId>=latestRelease.getId()) {
-        changeKey=historiesReleaseId+"+"+latestRelease.getId();
-      }else{
-        changeKey= latestRelease.getId()+"+"+historiesReleaseId;
-      }
-      return changeKey;
+      return latestRelease.getId()+"+"+historiesReleaseId;
     }
 
   }
 
-  private static class ConfigHistoriesCacheEntry {
-    //TODO 加入缓存淘汰的功能
+  private class ConfigHistoriesCacheEntry {
     //[releasemessageId,release] 用于存放历史的releaseMap
-    //TODO 并发安全
-    private final Map<Long,Release> releaseHistories;
+    private LoadingCache<Long, Release> releaseHistories;
 
-    public ConfigHistoriesCacheEntry(Map<Long,Release> releaseHistories) {
-      this.releaseHistories = releaseHistories;
+
+    public ConfigHistoriesCacheEntry() {
+      releaseHistories = CacheBuilder.newBuilder()
+              .maximumSize(100)
+              .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES, TimeUnit.MINUTES).build(new CacheLoader<Long, Release>() {
+                @Override
+                public Release load(Long key) throws Exception {
+                  return null;
+                }
+              });
     }
 
-    public Map<Long,Release> getReleaseHistories() {
+    public LoadingCache<Long,Release> getReleaseHistories() {
       return releaseHistories;
     }
-    //根据id删除
-    public long removeOne(){
-      //删除key最小的
-      Long releaseId=releaseHistories.keySet().stream().min(Long::compare).get();
-      releaseHistories.remove(releaseId);
-      return releaseId;
-    }
+
     //新增一条
-    public void addOne(Release release){
-      releaseHistories.put(release.getId(),release);
+    public void addOne(String key){
+      ConfigCacheEntry configCacheEntry=configCache.getUnchecked(key);
+      Release latestRelease=configCacheEntry.getRelease();
+      long notificationId=configCacheEntry.getNotificationId();
+      releaseHistories.put(notificationId,latestRelease);
+    }
+  }
+
+  private class ConfigHistories {
+    //[releasemessageId,release] 用于存放历史的releaseMap
+    private LoadingCache<String, ConfigHistoriesCacheEntry> configHistoriesCache;
+
+
+    public ConfigHistories() {
+      configHistoriesCache = CacheBuilder.newBuilder()
+              .maximumSize(100)
+              .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES, TimeUnit.MINUTES).build(new CacheLoader<String, ConfigHistoriesCacheEntry>() {
+                @Override
+                public ConfigHistoriesCacheEntry load(String key) throws Exception {
+                  return new ConfigHistoriesCacheEntry();
+                }
+              });
     }
 
+    public LoadingCache<Long, Release> getReleaseHistories(String key) {
+      return configHistoriesCache.getUnchecked(key).getReleaseHistories();
+    }
+
+
+    //新增一条
+    public void addOne(String key){
+      ConfigHistoriesCacheEntry configHistoriesCacheEntry=configHistoriesCache.getUnchecked(key);
+      configHistoriesCacheEntry.addOne(key);
+    }
   }
 
 }

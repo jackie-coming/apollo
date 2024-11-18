@@ -239,7 +239,6 @@ public class ConfigServiceWithCache extends AbstractConfigService {
     }
 
     public long getNotificationId() {
-
       return notificationId;
     }
 
