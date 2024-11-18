@@ -74,8 +74,7 @@ public class ConfigServiceAutoConfiguration {
       return new ConfigServiceWithCache(releaseService, releaseMessageService,
           grayReleaseRulesHolder(), bizConfig, meterRegistry);
     }
-    if(false){
-      //todo 是否要强制重启
+    if(bizConfig.isConfigServiceChangeCacheEnabled()){
       return new ConfigServiceWithChangeCache(releaseService, releaseMessageService,
                                               grayReleaseRulesHolder(), bizConfig, meterRegistry);
     }

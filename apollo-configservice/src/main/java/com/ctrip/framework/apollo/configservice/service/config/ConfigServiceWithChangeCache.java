@@ -58,13 +58,10 @@ import java.util.stream.Collectors;
 public class ConfigServiceWithChangeCache extends ConfigServiceWithCache implements IncrementalSyncConfigService {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
 
+
   private static final Gson GSON = new Gson();
 
-  private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES = 60;
-
-  //todo 基于缓存自身的能力来完成
-  //缓存里面套缓存（有大小限制）
-  private final Integer size=10;
+  private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS = 10;
 
   private LoadingCache<String, ConfigChangeCacheEntry> configChangeCache;
 
@@ -122,8 +119,6 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
       cacheKey = cacheKey.toLowerCase();
     }
 
-    Tracer.logEvent(TRACER_EVENT_CACHE_GET, cacheKey);
-
     ConfigChangeCacheEntry configChangeCacheEntry = configChangeCache.getUnchecked(cacheKey);
 
     //cache is out-dated
@@ -139,7 +134,7 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
   private void buildConfigChangeCache() {
     CacheBuilder configChangeCacheBuilder = CacheBuilder.newBuilder()
-            .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES, TimeUnit.MINUTES);
+            .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS, TimeUnit.SECONDS);
     if (bizConfig.isConfigServiceCacheStatsEnabled()) {
       configChangeCacheBuilder.recordStats();
     }
@@ -154,7 +149,6 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
           return new ConfigChangeCacheEntry(null, null);
         }
 
-        Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CACHE_LOAD, key);
         try {
           ConfigCacheEntry configCacheEntry=configCache.getUnchecked(key);
           Release latestRelease=configCacheEntry.getRelease();
@@ -170,14 +164,14 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
             configChangeCacheEntry.addOne(historiestrelease);
           }
 
-          transaction.setStatus(Transaction.SUCCESS);
+
 
           return configChangeCacheEntry;
         } catch (Throwable ex) {
-          transaction.setStatus(ex);
+
           throw ex;
         } finally {
-          transaction.complete();
+
         }
       }
     });
@@ -278,10 +272,10 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
     private LoadingCache<Long, Release> releaseHistories;
 
 
-    public ConfigHistoriesCacheEntry() {
+    public ConfigHistoriesCacheEntry(long maximumSize) {
       releaseHistories = CacheBuilder.newBuilder()
-              .maximumSize(100)
-              .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES, TimeUnit.MINUTES).build(new CacheLoader<Long, Release>() {
+              .maximumSize(maximumSize)
+              .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS, TimeUnit.SECONDS).build(new CacheLoader<Long, Release>() {
                 @Override
                 public Release load(Long key) throws Exception {
                   return null;
@@ -310,10 +304,10 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
     public ConfigHistories() {
       configHistoriesCache = CacheBuilder.newBuilder()
               .maximumSize(100)
-              .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES, TimeUnit.MINUTES).build(new CacheLoader<String, ConfigHistoriesCacheEntry>() {
+              .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS, TimeUnit.SECONDS).build(new CacheLoader<String, ConfigHistoriesCacheEntry>() {
                 @Override
                 public ConfigHistoriesCacheEntry load(String key) throws Exception {
-                  return new ConfigHistoriesCacheEntry();
+                  return new ConfigHistoriesCacheEntry(bizConfig.configServiceHistoryCacheHistoryMaxSize());
                 }
               });
     }

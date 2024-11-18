@@ -16,6 +16,7 @@
  */
 package com.ctrip.framework.apollo.configservice.controller;
 
+import com.ctrip.framework.apollo.biz.config.BizConfig;
 import com.ctrip.framework.apollo.biz.entity.Release;
 import com.ctrip.framework.apollo.common.entity.AppNamespace;
 import com.ctrip.framework.apollo.common.utils.WebUtils;
@@ -56,29 +57,32 @@ import java.util.stream.Collectors;
 public class ConfigController {
 
   private final ConfigService configService;
-  private final IncrementalSyncConfigService incrementalSyncConfigService;
-
   private final AppNamespaceServiceWithCache appNamespaceService;
   private final NamespaceUtil namespaceUtil;
   private final InstanceConfigAuditUtil instanceConfigAuditUtil;
   private final Gson gson;
+  protected final BizConfig bizConfig;
+  private final IncrementalSyncConfigService incrementalSyncConfigService;
+
 
   private static final Type configurationTypeReference = new TypeToken<Map<String, String>>() {
       }.getType();
 
   public ConfigController(
       final ConfigService configService,
-      final IncrementalSyncConfigService incrementalSyncConfigService,
       final AppNamespaceServiceWithCache appNamespaceService,
       final NamespaceUtil namespaceUtil,
       final InstanceConfigAuditUtil instanceConfigAuditUtil,
-      final Gson gson) {
+      final Gson gson,
+      final IncrementalSyncConfigService incrementalSyncConfigService,
+      final BizConfig bizConfig) {
     this.configService = configService;
-    this.incrementalSyncConfigService = incrementalSyncConfigService;
     this.appNamespaceService = appNamespaceService;
     this.namespaceUtil = namespaceUtil;
     this.instanceConfigAuditUtil = instanceConfigAuditUtil;
     this.gson = gson;
+    this.incrementalSyncConfigService = incrementalSyncConfigService;
+    this.bizConfig=bizConfig;
   }
 
   @GetMapping(value = "/{appId}/{clusterName}/{namespace:.+}")
@@ -151,12 +155,13 @@ public class ConfigController {
     ApolloConfig apolloConfig = new ApolloConfig(appId, appClusterNameLoaded, originalNamespace,
         mergedReleaseKey);
     //增量配置开关
-    if(false){
+    if(bizConfig.isConfigServiceChangeCacheEnabled()){
       Map<String,String> changeConfigurations =incrementalSyncConfigService.findLatestActiveChangeConfigurations(appId, clusterName, originalNamespace, clientMessages, -1);
       //这里不为空 命中缓存增量配置
       if(changeConfigurations.size()!=0){
         apolloConfig.setConfigurations(changeConfigurations);
-        Tracer.logEvent("Apollo.Config.Found", assembleKey(appId, appClusterNameLoaded,
+        //todo 客户端协议
+        Tracer.logEvent("Apollo.Config.incrementalSync.Found", assembleKey(appId, appClusterNameLoaded,
                                                            originalNamespace, dataCenter));
         return apolloConfig;
       }

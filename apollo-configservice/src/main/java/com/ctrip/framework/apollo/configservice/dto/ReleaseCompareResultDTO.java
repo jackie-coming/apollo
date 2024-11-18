@@ -33,24 +33,9 @@ public class ReleaseCompareResultDTO {
     changeDTOSs.add(new ChangeDTO(type, new EntityPair<>(firstEntity, secondEntity)));
   }
 
-  public List<KVEntity> getSecondEntitys() {
-    return changeDTOSs.stream().map(ChangeDTO::getEntity).map(EntityPair::getSecondEntity).collect(Collectors.toList());
-  }
   public List<KVEntity> getFirstEntitys() {
     return changeDTOSs.stream().map(ChangeDTO::getEntity).map(EntityPair::getFirstEntity).collect(Collectors.toList());
   }
 
-
-  public boolean hasContent(){
-    return !changeDTOSs.isEmpty();
-  }
-
-  public List<ChangeDTO> getChangeDTOSs() {
-    return changeDTOSs;
-  }
-
-  public void setChanges(List<ChangeDTO> changeDTOSs) {
-    this.changeDTOSs = changeDTOSs;
-  }
 
 }

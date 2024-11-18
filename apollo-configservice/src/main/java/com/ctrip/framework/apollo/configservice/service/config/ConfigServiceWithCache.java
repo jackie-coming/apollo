@@ -56,11 +56,11 @@ import org.springframework.util.CollectionUtils;
 public class ConfigServiceWithCache extends AbstractConfigService {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithCache.class);
   private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES = 60;//1 hour
-  protected static final String TRACER_EVENT_CACHE_INVALIDATE = "ConfigCache.Invalidate";
-  protected static final String TRACER_EVENT_CACHE_LOAD = "ConfigCache.LoadFromDB";
-  protected static final String TRACER_EVENT_CACHE_LOAD_ID = "ConfigCache.LoadFromDBById";
-  protected static final String TRACER_EVENT_CACHE_GET = "ConfigCache.Get";
-  protected static final String TRACER_EVENT_CACHE_GET_ID = "ConfigCache.GetById";
+  private static final String TRACER_EVENT_CACHE_INVALIDATE = "ConfigCache.Invalidate";
+  private static final String TRACER_EVENT_CACHE_LOAD = "ConfigCache.LoadFromDB";
+  private static final String TRACER_EVENT_CACHE_LOAD_ID = "ConfigCache.LoadFromDBById";
+  private static final String TRACER_EVENT_CACHE_GET = "ConfigCache.Get";
+  private static final String TRACER_EVENT_CACHE_GET_ID = "ConfigCache.GetById";
 
   protected final ReleaseService releaseService;
   protected final ReleaseMessageService releaseMessageService;
