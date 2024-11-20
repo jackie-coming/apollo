@@ -122,7 +122,6 @@ public class ConfigServiceWithCache extends AbstractConfigService {
 
     return cacheEntry.getRelease();
   }
-
   private void invalidate(String key) {
     configCache.invalidate(key);
     Tracer.logEvent(TRACER_EVENT_CACHE_INVALIDATE, key);

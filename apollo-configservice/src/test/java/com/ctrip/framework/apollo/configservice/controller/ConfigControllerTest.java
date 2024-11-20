@@ -16,10 +16,12 @@
  */
 package com.ctrip.framework.apollo.configservice.controller;
 
+import com.ctrip.framework.apollo.biz.config.BizConfig;
 import com.ctrip.framework.apollo.biz.entity.Release;
 import com.ctrip.framework.apollo.common.entity.AppNamespace;
 import com.ctrip.framework.apollo.configservice.service.AppNamespaceServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigService;
+import com.ctrip.framework.apollo.configservice.service.config.ConfigServiceWithChangeCache;
 import com.ctrip.framework.apollo.configservice.util.InstanceConfigAuditUtil;
 import com.ctrip.framework.apollo.configservice.util.NamespaceUtil;
 import com.ctrip.framework.apollo.core.ConfigConsts;
@@ -54,6 +56,9 @@ public class ConfigControllerTest {
   private ConfigService configService;
   @Mock
   private AppNamespaceServiceWithCache appNamespaceService;
+  private ConfigServiceWithChangeCache configServiceWithChangeCache;
+  @Mock
+  private  BizConfig bizConfig;
   private String someAppId;
   private String someClusterName;
   private String defaultClusterName;
@@ -69,6 +74,9 @@ public class ConfigControllerTest {
   private Release someRelease;
   @Mock
   private Release somePublicRelease;
+
+  @Mock
+  private Release anotherRelease;
   @Mock
   private NamespaceUtil namespaceUtil;
   @Mock
@@ -79,8 +87,13 @@ public class ConfigControllerTest {
 
   @Before
   public void setUp() throws Exception {
+    configServiceWithChangeCache = new ConfigServiceWithChangeCache(null, null,
+                                                                    null, bizConfig, null);
+
+    configServiceWithChangeCache.initialize();
+
     configController = spy(new ConfigController(
-        configService,null, appNamespaceService, namespaceUtil, instanceConfigAuditUtil, gson
+            configService, appNamespaceService, namespaceUtil, instanceConfigAuditUtil, gson, configServiceWithChangeCache, bizConfig
     ));
 
     someAppId = "1";
@@ -477,5 +490,45 @@ public class ConfigControllerTest {
     appNamespace.setName(namespace);
     appNamespace.setPublic(isPublic);
     return appNamespace;
+  }
+  //测试增量配置
+  @Test
+  public void testQueryConfigWithIncrementalSync() throws Exception {
+    when(bizConfig.isConfigServiceChangeCacheEnabled())
+            .thenReturn(true);
+
+    String someClientSideReleaseKey = "1";
+    String someServerSideNewReleaseKey = "2";
+    HttpServletResponse someResponse = mock(HttpServletResponse.class);
+
+    when(configService.loadConfig(someAppId, someClientIp, someClientLabel, someAppId, someClusterName, defaultNamespaceName,
+                                  someDataCenter, someNotificationMessages)).thenReturn(someRelease);
+    when(someRelease.getReleaseKey()).thenReturn(someServerSideNewReleaseKey);
+    when(someRelease.getNamespaceName()).thenReturn(defaultNamespaceName);
+    String configurations = "{\"apollo.public.foo\": \"foo\"}";
+    when(someRelease.getConfigurations()).thenReturn(configurations);
+
+    ApolloConfig result = configController.queryConfig(someAppId, someClusterName,
+                                                       defaultNamespaceName, someDataCenter, someClientSideReleaseKey,
+                                                       someClientIp, someClientLabel, someMessagesAsString, someRequest, someResponse);
+    assertEquals(1, result.getConfigurations().size());
+    assertEquals("foo", result.getConfigurations().get("apollo.public.foo"));
+
+
+    String anotherServerSideNewReleaseKey = "3";
+    when(configService.loadConfig(someAppId, someClientIp, someClientLabel, someAppId, someClusterName, defaultNamespaceName,
+                                  someDataCenter, someNotificationMessages)).thenReturn(anotherRelease);
+    when(anotherRelease.getReleaseKey()).thenReturn(anotherServerSideNewReleaseKey);
+    when(anotherRelease.getNamespaceName()).thenReturn(defaultNamespaceName);
+    String anotherConfigurations = "{\"apollo.public.foo\": \"foo\", \"apollo.public.bar\": \"bar\"}";
+    when(anotherRelease.getConfigurations()).thenReturn(anotherConfigurations);
+
+
+    ApolloConfig anotherResult = configController.queryConfig(someAppId, someClusterName,
+                                                       defaultNamespaceName, someDataCenter, someServerSideNewReleaseKey,
+                                                       someClientIp, someClientLabel, someMessagesAsString, someRequest, someResponse);
+    assertEquals(1, anotherResult.getConfigurations().size());
+    assertEquals("bar", anotherResult.getConfigurations().get("apollo.public.bar"));
+
   }
 }

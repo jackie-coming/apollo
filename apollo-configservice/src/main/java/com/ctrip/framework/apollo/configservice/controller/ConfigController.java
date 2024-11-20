@@ -61,8 +61,9 @@ public class ConfigController {
   private final NamespaceUtil namespaceUtil;
   private final InstanceConfigAuditUtil instanceConfigAuditUtil;
   private final Gson gson;
-  protected final BizConfig bizConfig;
   private final IncrementalSyncConfigService incrementalSyncConfigService;
+
+  private final BizConfig bizConfig;
 
 
   private static final Type configurationTypeReference = new TypeToken<Map<String, String>>() {
@@ -141,10 +142,10 @@ public class ConfigController {
 
     auditReleases(appId, clusterName, dataCenter, clientIp, releases);
 
-    String mergedReleaseKey = releases.stream().map(Release::getReleaseKey)
+    String latestMergedReleaseKey = releases.stream().map(Release::getReleaseKey)
             .collect(Collectors.joining(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR));
 
-    if (mergedReleaseKey.equals(clientSideReleaseKey)) {
+    if (latestMergedReleaseKey.equals(clientSideReleaseKey)) {
       // Client side configuration is the same with server side, return 304
       response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
       Tracer.logEvent("Apollo.Config.NotModified",
@@ -153,21 +154,22 @@ public class ConfigController {
     }
 
     ApolloConfig apolloConfig = new ApolloConfig(appId, appClusterNameLoaded, originalNamespace,
-        mergedReleaseKey);
+        latestMergedReleaseKey);
+    Map<String, String> latestConfigurations=mergeReleaseConfigurations(releases);
     //增量配置开关
     if(bizConfig.isConfigServiceChangeCacheEnabled()){
-      Map<String,String> changeConfigurations =incrementalSyncConfigService.findLatestActiveChangeConfigurations(appId, clusterName, originalNamespace, clientMessages, -1);
-      //这里不为空 命中缓存增量配置
-      if(changeConfigurations.size()!=0){
+      incrementalSyncConfigService.cache(latestMergedReleaseKey, latestConfigurations);
+      Map<String,String> historyConfigurations=incrementalSyncConfigService.findConfigurations(clientSideReleaseKey);
+      if(historyConfigurations!=null&&historyConfigurations.size()>0){
+        Map<String,String> changeConfigurations=incrementalSyncConfigService.changeConfigurations(latestConfigurations, historyConfigurations);
+        //客户端走增量更新，新增两个字段，一个是标识，另外一个是配置
         apolloConfig.setConfigurations(changeConfigurations);
-        //todo 客户端协议
-        Tracer.logEvent("Apollo.Config.incrementalSync.Found", assembleKey(appId, appClusterNameLoaded,
-                                                           originalNamespace, dataCenter));
         return apolloConfig;
       }
 
     }
-    apolloConfig.setConfigurations(mergeReleaseConfigurations(releases));
+    //change计算历史和最新的配置
+    apolloConfig.setConfigurations(latestConfigurations);
 
     Tracer.logEvent("Apollo.Config.Found", assembleKey(appId, appClusterNameLoaded,
         originalNamespace, dataCenter));

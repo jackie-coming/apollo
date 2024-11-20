@@ -16,19 +16,16 @@
  */
 package com.ctrip.framework.apollo.configservice.service.config;
 
-import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
-
 import java.util.Map;
 
 /**
- * @author Jason Song(song_s@ctrip.com)
+ * @author jason
  */
 public interface IncrementalSyncConfigService {
+    Map<String,String> changeConfigurations(Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations);
 
-  /**
-   * Load config
-   *
-   */
-   Map<String,String> findLatestActiveChangeConfigurations(String appId, String clusterName, String namespaceName,
-                                                           ApolloNotificationMessages clientMessages, long historyReleaseId);
+    void cache(String latestMergedReleaseKey,Map<String, String> latestReleaseConfigurations);
+
+    Map<String,String> findConfigurations(String mergedReleaseKey);
+
 }
