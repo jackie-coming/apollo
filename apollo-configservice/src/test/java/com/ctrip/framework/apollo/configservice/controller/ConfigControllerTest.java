@@ -87,8 +87,7 @@ public class ConfigControllerTest {
 
   @Before
   public void setUp() throws Exception {
-    configServiceWithChangeCache = new ConfigServiceWithChangeCache(null, null,
-                                                                    null, bizConfig, null);
+    configServiceWithChangeCache = new ConfigServiceWithChangeCache();
 
     configServiceWithChangeCache.initialize();
 

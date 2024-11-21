@@ -48,22 +48,9 @@ import static org.mockito.Mockito.*;
 public class ConfigServiceWithChangeCacheTest {
   private ConfigServiceWithChangeCache configServiceWithChangeCache;
 
-  @Mock
-  private ReleaseService releaseService;
-  @Mock
-  private ReleaseMessageService releaseMessageService;
-
-  @Mock
-  private BizConfig bizConfig;
-  @Mock
-  private MeterRegistry meterRegistry;
-  @Mock
-  private GrayReleaseRulesHolder grayReleaseRulesHolder;
-
   @Before
   public void setUp() throws Exception {
-    configServiceWithChangeCache = new ConfigServiceWithChangeCache(releaseService, releaseMessageService,
-                                                              grayReleaseRulesHolder, bizConfig, meterRegistry);
+    configServiceWithChangeCache = new ConfigServiceWithChangeCache();
 
     configServiceWithChangeCache.initialize();
   }

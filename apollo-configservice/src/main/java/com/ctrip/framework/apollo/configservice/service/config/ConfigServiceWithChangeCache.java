@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
  *
  * @author Jason
  */
-public class ConfigServiceWithChangeCache extends ConfigServiceWithCache implements IncrementalSyncConfigService {
+public class ConfigServiceWithChangeCache implements IncrementalSyncConfigService {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
 
 
@@ -53,20 +52,14 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
   public LoadingCache<String,Map<String, String>> mergedReleaseCache;
 
 
-  public ConfigServiceWithChangeCache(final ReleaseService releaseService,
-                                      final ReleaseMessageService releaseMessageService,
-                                      final GrayReleaseRulesHolder grayReleaseRulesHolder,
-                                      final BizConfig bizConfig,
-                                      final MeterRegistry meterRegistry) {
-    super(releaseService,releaseMessageService,grayReleaseRulesHolder,bizConfig,meterRegistry);
-  }
+  public ConfigServiceWithChangeCache() {}
 
   @PostConstruct
   public void initialize() {
-    buildNotificationIdCache();
+    buildMergedReleaseCache();
   }
 
-  private void buildNotificationIdCache() {
+  private void buildMergedReleaseCache() {
     CacheBuilder mergedReleaseCacheBuilder = CacheBuilder.newBuilder()
             .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS, TimeUnit.SECONDS);
 
@@ -111,14 +104,14 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
     ReleaseCompareResultDTO compareResult = new ReleaseCompareResultDTO();
 
-    //added and modified in firstRelease
+    //added and modified in latestReleaseConfigurations
     for (Map.Entry<String, String> entry : latestReleaseConfigurations.entrySet()) {
       String key = entry.getKey();
       String firstValue = entry.getValue();
       String secondValue = historyReleaseConfigurations.get(key);
       //added
       if (secondValue == null) {
-        compareResult.addEntityPair(ChangeType.DELETED, new KVEntity(key, firstValue),
+        compareResult.addEntityPair(ChangeType.ADDED, new KVEntity(key, firstValue),
                                     new KVEntity(key, null));
       } else if (!Objects.equal(firstValue, secondValue)) {
         compareResult.addEntityPair(ChangeType.MODIFIED, new KVEntity(key, firstValue),
@@ -127,12 +120,12 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache impleme
 
     }
 
-    //deleted in firstRelease
+    //deleted in latestReleaseConfigurations
     for (Map.Entry<String, String> entry : historyReleaseConfigurations.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if (latestReleaseConfigurations.get(key) == null) {
-        compareResult.addEntityPair(ChangeType.ADDED, new KVEntity(key, ""), new KVEntity(key, value));
+        compareResult.addEntityPair(ChangeType.DELETED, new KVEntity(key,""), new KVEntity(key, value));
       }
 
     }
