@@ -18,6 +18,7 @@ package com.ctrip.framework.apollo.configservice.service.config;
 
 import com.ctrip.framework.apollo.biz.grayReleaseRule.GrayReleaseRulesHolder;
 import com.ctrip.framework.apollo.biz.config.BizConfig;
+import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -37,12 +38,15 @@ import com.ctrip.framework.apollo.tracer.spi.Transaction;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
+
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -244,5 +248,13 @@ public class ConfigServiceWithCache extends AbstractConfigService {
     public Release getRelease() {
       return release;
     }
+  }
+  @Override
+  public List<ConfigurationChange> calcConfigurationChanges(Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations){
+    return null;
+  }
+  @Override
+  public Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys){
+    return null;
   }
 }

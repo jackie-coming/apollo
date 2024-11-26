@@ -22,16 +22,18 @@ import com.ctrip.framework.apollo.common.entity.AppNamespace;
 import com.ctrip.framework.apollo.common.utils.WebUtils;
 import com.ctrip.framework.apollo.configservice.service.AppNamespaceServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigService;
-import com.ctrip.framework.apollo.configservice.service.config.IncrementalSyncConfigService;
 import com.ctrip.framework.apollo.configservice.util.InstanceConfigAuditUtil;
 import com.ctrip.framework.apollo.configservice.util.NamespaceUtil;
 import com.ctrip.framework.apollo.core.ConfigConsts;
 import com.ctrip.framework.apollo.core.dto.ApolloConfig;
 import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
+import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
+import com.ctrip.framework.apollo.core.enums.ConfigSyncType;
 import com.ctrip.framework.apollo.tracer.Tracer;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,9 +46,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,8 +61,6 @@ public class ConfigController {
   private final NamespaceUtil namespaceUtil;
   private final InstanceConfigAuditUtil instanceConfigAuditUtil;
   private final Gson gson;
-  private final IncrementalSyncConfigService incrementalSyncConfigService;
-
   private final BizConfig bizConfig;
 
 
@@ -75,14 +73,12 @@ public class ConfigController {
       final NamespaceUtil namespaceUtil,
       final InstanceConfigAuditUtil instanceConfigAuditUtil,
       final Gson gson,
-      final IncrementalSyncConfigService incrementalSyncConfigService,
       final BizConfig bizConfig) {
     this.configService = configService;
     this.appNamespaceService = appNamespaceService;
     this.namespaceUtil = namespaceUtil;
     this.instanceConfigAuditUtil = instanceConfigAuditUtil;
     this.gson = gson;
-    this.incrementalSyncConfigService = incrementalSyncConfigService;
     this.bizConfig=bizConfig;
   }
 
@@ -158,15 +154,25 @@ public class ConfigController {
     Map<String, String> latestConfigurations=mergeReleaseConfigurations(releases);
     //增量配置开关
     if(bizConfig.isConfigServiceChangeCacheEnabled()){
-      incrementalSyncConfigService.cache(latestMergedReleaseKey, latestConfigurations);
-      Map<String,String> historyConfigurations=incrementalSyncConfigService.findConfigurations(clientSideReleaseKey);
-      if(historyConfigurations!=null&&historyConfigurations.size()>0){
-        Map<String,String> changeConfigurations=incrementalSyncConfigService.changeConfigurations(latestConfigurations, historyConfigurations);
-        //客户端走增量更新，新增两个字段，一个是标识，另外一个是配置
-        apolloConfig.setConfigurations(changeConfigurations);
+      //将clientSideReleaseKey用字符串+ 拆出来,同时按照顺序
+      LinkedHashSet<String> clientSideReleaseKeys= Sets.newLinkedHashSet(Arrays.stream(clientSideReleaseKey.split("\\+")).collect(Collectors.toList()));
+      Map<String,Release> historyReleasesMap=configService.findReleasesByReleaseKeys(clientSideReleaseKeys);
+      if(historyReleasesMap!=null){
+        //按照顺序merge
+        List<Release> historyReleases=new ArrayList<>();
+        for (String clientSideReleaseKeyItem:clientSideReleaseKeys){
+          Release release=historyReleasesMap.get(clientSideReleaseKeyItem);
+          if(release!=null){
+            historyReleases.add(release);
+          }
+        }
+        Map<String, String> historyConfigurations=mergeReleaseConfigurations(historyReleases);
+        List<ConfigurationChange> configurationChanges=configService.calcConfigurationChanges(latestConfigurations, historyConfigurations);
+        apolloConfig.setConfigurationChanges(configurationChanges);
+        apolloConfig.setConfigSyncType(ConfigSyncType.INCREMENTALSYNC.getValue());
         return apolloConfig;
-      }
 
+      }
     }
     //change计算历史和最新的配置
     apolloConfig.setConfigurations(latestConfigurations);

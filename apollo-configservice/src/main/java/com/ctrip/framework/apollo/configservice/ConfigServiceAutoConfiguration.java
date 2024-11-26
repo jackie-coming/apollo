@@ -70,18 +70,16 @@ public class ConfigServiceAutoConfiguration {
 
   @Bean
   public ConfigService configService() {
-    if (bizConfig.isConfigServiceCacheEnabled()||bizConfig.isConfigServiceChangeCacheEnabled()) {
+    if (bizConfig.isConfigServiceCacheEnabled()) {
       return new ConfigServiceWithCache(releaseService, releaseMessageService,
           grayReleaseRulesHolder(), bizConfig, meterRegistry);
     }
+    if(bizConfig.isConfigServiceChangeCacheEnabled()){
+      return new ConfigServiceWithChangeCache(releaseService, releaseMessageService,
+                                              grayReleaseRulesHolder(), bizConfig, meterRegistry);
+    }
     return new DefaultConfigService(releaseService, grayReleaseRulesHolder());
   }
-  @Bean
-  public ConfigServiceWithChangeCache incrementalSyncConfigService() {
-      return new ConfigServiceWithChangeCache();
-
-  }
-
   @Bean
   public static NoOpPasswordEncoder passwordEncoder() {
     return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
