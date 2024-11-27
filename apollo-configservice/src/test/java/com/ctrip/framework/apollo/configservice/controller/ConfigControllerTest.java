@@ -504,7 +504,6 @@ public class ConfigControllerTest {
     String someConfigurations = "{\"apollo.public.foo\": \"foo\"}";
     HttpServletResponse someResponse = mock(HttpServletResponse.class);
     Map<String, Release> someReleaseMap = mock(Map.class);
-    String resultConfigurations = "{\"apollo.public.bar\": \"bar\"}";
 
     String anotherConfigurations = "{\"apollo.public.foo\": \"foo\", \"apollo.public.bar\": \"bar\"}";
 

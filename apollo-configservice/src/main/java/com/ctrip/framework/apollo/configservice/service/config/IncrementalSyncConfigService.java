@@ -18,7 +18,6 @@ package com.ctrip.framework.apollo.configservice.service.config;
 
 import com.ctrip.framework.apollo.biz.entity.Release;
 import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,8 +26,18 @@ import java.util.Set;
  * @author jason
  */
 public interface IncrementalSyncConfigService {
+
+    /**
+     * @param latestReleaseConfigurations
+     * @param historyConfigurations
+     * @return the ConfigurationChanges
+     */
     List<ConfigurationChange> calcConfigurationChanges(Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations);
 
+    /**
+     * @param releaseKeys
+     * @return the ReleaseMap
+     */
     Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys);
 
 }

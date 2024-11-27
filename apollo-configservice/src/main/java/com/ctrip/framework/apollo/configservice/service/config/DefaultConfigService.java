@@ -21,11 +21,6 @@ import com.ctrip.framework.apollo.biz.entity.ReleaseMessage;
 import com.ctrip.framework.apollo.biz.grayReleaseRule.GrayReleaseRulesHolder;
 import com.ctrip.framework.apollo.biz.service.ReleaseService;
 import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
-import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * config service with no cache
@@ -59,13 +54,5 @@ public class DefaultConfigService extends AbstractConfigService {
   @Override
   public void handleMessage(ReleaseMessage message, String channel) {
     // since there is no cache, so do nothing
-  }
-
-  public List<ConfigurationChange> calcConfigurationChanges(Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations){
-    return null;
-  }
-  @Override
-  public Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys){
-    return null;
   }
 }

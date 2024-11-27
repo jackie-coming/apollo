@@ -33,7 +33,7 @@ server:
 
 logging:
   file:
-    name: ./logs/apollo-configService.log
+    name: /opt/logs/apollo-configservice.log
 
 eureka:
   instance:

@@ -56,8 +56,6 @@ public class ConfigServiceWithChangeCacheTest {
   @Mock
   private Release someRelease;
   @Mock
-  private ReleaseMessage someReleaseMessage;
-  @Mock
   private BizConfig bizConfig;
   @Mock
   private MeterRegistry meterRegistry;

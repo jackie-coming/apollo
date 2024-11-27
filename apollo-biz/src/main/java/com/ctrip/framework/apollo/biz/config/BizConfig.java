@@ -56,8 +56,6 @@ public class BizConfig extends RefreshableConfig {
   private static final int DEFAULT_LONG_POLLING_TIMEOUT = 60; //60s
   public static final int DEFAULT_RELEASE_HISTORY_RETENTION_SIZE = -1;
 
-  private static final int CONFIG_SERVICE_CHANGE_CACHE_HISTORY_MAX_SIZE = 100;
-
   private static final Gson GSON = new Gson();
 
   private static final Type namespaceValueLengthOverrideTypeReference =
@@ -248,10 +246,6 @@ public class BizConfig extends RefreshableConfig {
     return getBooleanProperty("config-service.change.cache.enabled", false);
   }
 
-  public int configServiceHistoryCacheHistoryMaxSize() {
-    int maxSize = getIntProperty("config-service.change.cache.history.maxSize", CONFIG_SERVICE_CHANGE_CACHE_HISTORY_MAX_SIZE);
-    return checkInt(maxSize, 1, Integer.MAX_VALUE, CONFIG_SERVICE_CHANGE_CACHE_HISTORY_MAX_SIZE);
-  }
 
   int checkInt(int value, int min, int max, int defaultValue) {
     if (value >= min && value <= max) {

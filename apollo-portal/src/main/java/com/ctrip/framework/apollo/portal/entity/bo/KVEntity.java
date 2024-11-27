@@ -14,26 +14,31 @@
  * limitations under the License.
  *
  */
-package com.ctrip.framework.apollo.configservice.util;
+package com.ctrip.framework.apollo.portal.entity.bo;
 
-import com.ctrip.framework.apollo.common.entity.AppNamespace;
-import com.ctrip.framework.apollo.configservice.service.AppNamespaceServiceWithCache;
-import org.springframework.stereotype.Component;
+public class KVEntity {
 
-/**
- * @author Jason Song(song_s@ctrip.com)
- */
+  private String key;
+  private String value;
 
-public class ChangeKeyUtil {
-
-  public String getChangeKey(Long releaseId,Long releaseId2) {
-   //按照大+小 拼接
-    if(releaseId>releaseId2){
-      return releaseId+"_"+releaseId2;
-    }else{
-      return releaseId2+"_"+releaseId;
-    }
-
+  public KVEntity(String key, String value) {
+    this.key = key;
+    this.value = value;
   }
 
+  public String getKey() {
+    return key;
+  }
+
+  public void setKey(String key) {
+    this.key = key;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
 }

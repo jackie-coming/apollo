@@ -18,7 +18,6 @@ package com.ctrip.framework.apollo.configservice.service.config;
 
 import com.ctrip.framework.apollo.biz.grayReleaseRule.GrayReleaseRulesHolder;
 import com.ctrip.framework.apollo.biz.config.BizConfig;
-import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -38,15 +37,12 @@ import com.ctrip.framework.apollo.tracer.spi.Transaction;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
-
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
@@ -67,13 +63,13 @@ public class ConfigServiceWithCache extends AbstractConfigService {
   private static final String TRACER_EVENT_CACHE_GET_ID = "ConfigCache.GetById";
 
   protected final ReleaseService releaseService;
-  protected final ReleaseMessageService releaseMessageService;
+  private final ReleaseMessageService releaseMessageService;
   protected final BizConfig bizConfig;
   private final MeterRegistry meterRegistry;
 
-  protected LoadingCache<String, ConfigCacheEntry> configCache;
+  private LoadingCache<String, ConfigCacheEntry> configCache;
 
-  protected LoadingCache<Long, Optional<Release>> configIdCache;
+  private LoadingCache<Long, Optional<Release>> configIdCache;
 
   private ConfigCacheEntry nullConfigCacheEntry;
 
@@ -126,6 +122,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
 
     return cacheEntry.getRelease();
   }
+
   private void invalidate(String key) {
     configCache.invalidate(key);
     Tracer.logEvent(TRACER_EVENT_CACHE_INVALIDATE, key);
@@ -232,7 +229,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
 
   }
 
-  protected static class ConfigCacheEntry {
+  private static class ConfigCacheEntry {
     private final long notificationId;
     private final Release release;
 
@@ -248,13 +245,5 @@ public class ConfigServiceWithCache extends AbstractConfigService {
     public Release getRelease() {
       return release;
     }
-  }
-  @Override
-  public List<ConfigurationChange> calcConfigurationChanges(Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations){
-    return null;
-  }
-  @Override
-  public Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys){
-    return null;
   }
 }

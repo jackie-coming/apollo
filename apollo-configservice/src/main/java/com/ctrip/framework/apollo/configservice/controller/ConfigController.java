@@ -46,7 +46,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -151,30 +156,40 @@ public class ConfigController {
 
     ApolloConfig apolloConfig = new ApolloConfig(appId, appClusterNameLoaded, originalNamespace,
         latestMergedReleaseKey);
+
     Map<String, String> latestConfigurations=mergeReleaseConfigurations(releases);
-    //增量配置开关
+
     if(bizConfig.isConfigServiceChangeCacheEnabled()){
-      //将clientSideReleaseKey用字符串+ 拆出来,同时按照顺序
-      LinkedHashSet<String> clientSideReleaseKeys= Sets.newLinkedHashSet(Arrays.stream(clientSideReleaseKey.split("\\+")).collect(Collectors.toList()));
-      Map<String,Release> historyReleasesMap=configService.findReleasesByReleaseKeys(clientSideReleaseKeys);
-      if(historyReleasesMap!=null){
-        //按照顺序merge
-        List<Release> historyReleases=new ArrayList<>();
-        for (String clientSideReleaseKeyItem:clientSideReleaseKeys){
-          Release release=historyReleasesMap.get(clientSideReleaseKeyItem);
+      LinkedHashSet<String> clientSideReleaseKeys = Sets.newLinkedHashSet(
+          Arrays.stream(clientSideReleaseKey.split("\\+")).collect(Collectors.toList()));
+
+      Map<String, Release> historyReleases = configService.findReleasesByReleaseKeys(
+          clientSideReleaseKeys);
+      //find history releases
+      if (historyReleases != null) {
+        //order by clientSideReleaseKeys
+        List<Release> historyReleasesWithOrder = new ArrayList<>();
+        for (String item : clientSideReleaseKeys) {
+          Release release = historyReleases.get(item);
           if(release!=null){
-            historyReleases.add(release);
+            historyReleasesWithOrder.add(release);
           }
         }
-        Map<String, String> historyConfigurations=mergeReleaseConfigurations(historyReleases);
-        List<ConfigurationChange> configurationChanges=configService.calcConfigurationChanges(latestConfigurations, historyConfigurations);
+
+        Map<String, String> historyConfigurations = mergeReleaseConfigurations
+            (historyReleasesWithOrder);
+
+        List<ConfigurationChange> configurationChanges = configService.calcConfigurationChanges
+            (latestConfigurations, historyConfigurations);
+
         apolloConfig.setConfigurationChanges(configurationChanges);
+
         apolloConfig.setConfigSyncType(ConfigSyncType.INCREMENTALSYNC.getValue());
         return apolloConfig;
-
       }
+
     }
-    //change计算历史和最新的配置
+
     apolloConfig.setConfigurations(latestConfigurations);
 
     Tracer.logEvent("Apollo.Config.Found", assembleKey(appId, appClusterNameLoaded,
