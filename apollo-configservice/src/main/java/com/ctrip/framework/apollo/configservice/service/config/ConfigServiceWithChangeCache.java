@@ -54,7 +54,7 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
 
 
-  private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS = 10;
+	private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS = 10;
 
 	private static final String TRACER_EVENT_CHANGE_CACHE_LOAD_KEY = "ConfigChangeCache.LoadFromDBbyKey";
 
@@ -83,7 +83,7 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 	private void buildReleaseCache() {
 
 	  CacheBuilder releasesCacheBuilder = CacheBuilder.newBuilder()
-			  .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS, TimeUnit.SECONDS);
+			  .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS, TimeUnit.SECONDS);
 
 	  releasesCache = releasesCacheBuilder.build(new CacheLoader<String, Optional<Release>>() {
       @Override
@@ -113,21 +113,24 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 			  message.getMessage())) {
       return;
     }
-
+	  String messageKey = message.getMessage();
+	  if (bizConfig.isConfigServiceCacheKeyIgnoreCase()) {
+		  messageKey = messageKey.toLowerCase();
+	  }
+	  Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD, messageKey);
     try {
-      String messageKey = message.getMessage();
-      if (bizConfig.isConfigServiceCacheKeyIgnoreCase()) {
-        messageKey = messageKey.toLowerCase();
-      }
-	    Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD, messageKey);
-
       List<String> namespaceInfo = ReleaseMessageKeyGenerator.messageToList(messageKey);
 	    Release latestRelease = releaseService.findLatestActiveRelease(namespaceInfo.get(0),
 			    namespaceInfo.get(1), namespaceInfo.get(2));
 
 	    releasesCache.put(latestRelease.getReleaseKey(), Optional.ofNullable(latestRelease));
+
+	    transaction.setStatus(Transaction.SUCCESS);
     } catch (Throwable ex) {
+	    transaction.setStatus(ex);
       //ignore
+    } finally {
+	    transaction.complete();
     }
   }
 
