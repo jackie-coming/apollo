@@ -76,10 +76,11 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 
   @PostConstruct
   public void initialize() {
-    buildReleaseKeyCache();
+	  super.initialize();
+	  buildReleaseCache();
   }
 
-  private void buildReleaseKeyCache() {
+	private void buildReleaseCache() {
 
 	  CacheBuilder releasesCacheBuilder = CacheBuilder.newBuilder()
 			  .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SencondS, TimeUnit.SECONDS);
