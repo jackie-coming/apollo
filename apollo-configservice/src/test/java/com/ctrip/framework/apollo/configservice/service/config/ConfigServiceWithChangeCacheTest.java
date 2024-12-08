@@ -103,7 +103,7 @@ public class ConfigServiceWithChangeCacheTest {
     assertEquals(1, result.size());
     assertEquals(key2, result.get(0).getKey());
     assertEquals(value2, result.get(0).getNewValue());
-    assertEquals(ConfigurationChangeType.ADDED, result.get(0).getConfigurationChangeType());
+    assertEquals("ADDED", result.get(0).getConfigurationChangeType());
   }
   @Test
   public void testChangeConfigurationsWithLatestConfigIsNULL() {
@@ -119,7 +119,7 @@ public class ConfigServiceWithChangeCacheTest {
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(null, result.get(0).getNewValue());
-    assertEquals(ConfigurationChangeType.DELETED, result.get(0).getConfigurationChangeType());
+    assertEquals("DELETED", result.get(0).getConfigurationChangeType());
   }
   @Test
   public void testChangeConfigurationsWithHistoryConfigIsNULL() {
@@ -134,7 +134,7 @@ public class ConfigServiceWithChangeCacheTest {
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(value1, result.get(0).getNewValue());
-    assertEquals(ConfigurationChangeType.ADDED, result.get(0).getConfigurationChangeType());
+    assertEquals("ADDED", result.get(0).getConfigurationChangeType());
   }
   @Test
   public void testChangeConfigurationsWithUpdate() {
@@ -152,7 +152,7 @@ public class ConfigServiceWithChangeCacheTest {
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(anotherValue1, result.get(0).getNewValue());
-    assertEquals(ConfigurationChangeType.MODIFIED, result.get(0).getConfigurationChangeType());
+    assertEquals("MODIFIED", result.get(0).getConfigurationChangeType());
   }
   @Test
   public void testChangeConfigurationsWithDelete() {
@@ -168,7 +168,7 @@ public class ConfigServiceWithChangeCacheTest {
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(null, result.get(0).getNewValue());
-    assertEquals(ConfigurationChangeType.DELETED, result.get(0).getConfigurationChangeType());
+    assertEquals("DELETED", result.get(0).getConfigurationChangeType());
   }
 
   @Test

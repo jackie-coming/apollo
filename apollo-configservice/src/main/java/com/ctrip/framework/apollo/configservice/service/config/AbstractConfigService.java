@@ -122,11 +122,11 @@ public abstract class AbstractConfigService implements ConfigService {
 
     for (String newKey : newKeys) {
       changes.add(new ConfigurationChange(newKey, latestReleaseConfigurations.get(newKey),
-          ConfigurationChangeType.ADDED));
+          "ADDED"));
     }
 
     for (String removedKey : removedKeys) {
-      changes.add(new ConfigurationChange(removedKey, null, ConfigurationChangeType.DELETED));
+      changes.add(new ConfigurationChange(removedKey, null,"DELETED"));
     }
 
     for (String commonKey : commonKeys) {
@@ -136,7 +136,7 @@ public abstract class AbstractConfigService implements ConfigService {
         continue;
       }
       changes.add(
-          new ConfigurationChange(commonKey, currentValue, ConfigurationChangeType.MODIFIED));
+          new ConfigurationChange(commonKey, currentValue,"MODIFIED"));
     }
 
     return changes;

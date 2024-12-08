@@ -516,7 +516,7 @@ public class ConfigControllerTest {
     when(anotherRelease.getConfigurations()).thenReturn(anotherConfigurations);
 
     List<ConfigurationChange> configurationChanges=new ArrayList<>();
-    configurationChanges.add(new ConfigurationChange("apollo.public.bar", "bar", ConfigurationChangeType.ADDED));
+    configurationChanges.add(new ConfigurationChange("apollo.public.bar", "bar", "ADDED"));
     when(configService.calcConfigurationChanges(gson.fromJson(anotherConfigurations, configurationTypeReference),
                                                 gson.fromJson(someConfigurations, configurationTypeReference)))
             .thenReturn(configurationChanges);
@@ -602,9 +602,9 @@ public class ConfigControllerTest {
     String mergeServerSideConfigurations = "{\"apollo.public.bar\": \"bar\",\"apollo.public.foo\": \"foo-override\"}";
     String mergeClientSideConfigurations = "{\"apollo.public.foo.client\": \"foo.override\"}";
     List<ConfigurationChange> configurationChanges=new ArrayList<>();
-    configurationChanges.add(new ConfigurationChange("apollo.public.bar", "bar", ConfigurationChangeType.ADDED));
-    configurationChanges.add(new ConfigurationChange("apollo.public.foo", "foo-override", ConfigurationChangeType.ADDED));
-    configurationChanges.add(new ConfigurationChange("apollo.public.foo.client", null, ConfigurationChangeType.DELETED));
+    configurationChanges.add(new ConfigurationChange("apollo.public.bar", "bar", "ADDED"));
+    configurationChanges.add(new ConfigurationChange("apollo.public.foo", "foo-override", "ADDED"));
+    configurationChanges.add(new ConfigurationChange("apollo.public.foo.client", null, "DELETED"));
     when(configService.calcConfigurationChanges(gson.fromJson(mergeServerSideConfigurations, configurationTypeReference),
                                                 gson.fromJson(mergeClientSideConfigurations, configurationTypeReference)))
             .thenReturn(configurationChanges);
