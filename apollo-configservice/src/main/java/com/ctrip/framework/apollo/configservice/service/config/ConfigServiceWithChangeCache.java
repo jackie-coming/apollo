@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 
-  private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
+	private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
 
 
 	private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS = 10;
@@ -70,7 +70,7 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 		  final BizConfig bizConfig,
 		  final MeterRegistry meterRegistry) {
 
-    super(releaseService, releaseMessageService, grayReleaseRulesHolder, bizConfig, meterRegistry);
+	  super(releaseService, releaseMessageService, grayReleaseRulesHolder, bizConfig, meterRegistry);
 
   }
 
@@ -82,10 +82,10 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 
 	private void buildReleaseCache() {
 
-	  CacheBuilder releasesCacheBuilder = CacheBuilder.newBuilder()
+		CacheBuilder releasesCacheBuilder = CacheBuilder.newBuilder()
 			  .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS, TimeUnit.SECONDS);
 
-	  releasesCache = releasesCacheBuilder.build(new CacheLoader<String, Optional<Release>>() {
+		releasesCache = releasesCacheBuilder.build(new CacheLoader<String, Optional<Release>>() {
       @Override
       public Optional<Release> load(String key) {
 	      Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD_KEY, key);

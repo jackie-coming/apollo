@@ -136,7 +136,7 @@ public abstract class AbstractConfigService implements ConfigService {
         continue;
       }
       changes.add(
-          new ConfigurationChange(commonKey, currentValue,"MODIFIED"));
+          new ConfigurationChange(commonKey, currentValue, "MODIFIED"));
     }
 
     return changes;

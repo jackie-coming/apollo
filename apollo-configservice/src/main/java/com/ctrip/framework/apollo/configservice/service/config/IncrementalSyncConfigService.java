@@ -32,7 +32,8 @@ public interface IncrementalSyncConfigService {
      * @param historyConfigurations
      * @return the ConfigurationChanges
      */
-    List<ConfigurationChange> calcConfigurationChanges(Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations);
+    List<ConfigurationChange> calcConfigurationChanges(
+        Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations);
 
     /**
      * @param releaseKeys

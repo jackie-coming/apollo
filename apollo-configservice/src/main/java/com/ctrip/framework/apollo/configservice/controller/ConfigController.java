@@ -179,8 +179,8 @@ public class ConfigController {
         Map<String, String> historyConfigurations = mergeReleaseConfigurations
             (historyReleasesWithOrder);
 
-        List<ConfigurationChange> configurationChanges = configService.calcConfigurationChanges
-            (latestConfigurations, historyConfigurations);
+        List<ConfigurationChange> configurationChanges = configService.calcConfigurationChanges(
+            latestConfigurations, historyConfigurations);
 
         apolloConfig.setConfigurationChanges(configurationChanges);
 
