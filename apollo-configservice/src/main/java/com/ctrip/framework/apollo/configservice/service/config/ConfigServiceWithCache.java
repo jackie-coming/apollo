@@ -54,7 +54,6 @@ import org.springframework.util.CollectionUtils;
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ConfigServiceWithCache extends AbstractConfigService {
-
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithCache.class);
   private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_MINUTES = 60;//1 hour
   private static final String TRACER_EVENT_CACHE_INVALIDATE = "ConfigCache.Invalidate";
@@ -101,7 +100,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
 
   @Override
   protected Release findLatestActiveRelease(String appId, String clusterName, String namespaceName,
-      ApolloNotificationMessages clientMessages) {
+                                            ApolloNotificationMessages clientMessages) {
     String messageKey = ReleaseMessageKeyGenerator.generate(appId, clusterName, namespaceName);
     String cacheKey = messageKey;
 
@@ -132,8 +131,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
   @Override
   public void handleMessage(ReleaseMessage message, String channel) {
     logger.info("message received - channel: {}, message: {}", channel, message);
-    if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(
-        message.getMessage())) {
+    if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(message.getMessage())) {
       return;
     }
 
@@ -170,19 +168,15 @@ public class ConfigServiceWithCache extends AbstractConfigService {
 
         Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CACHE_LOAD, key);
         try {
-          ReleaseMessage latestReleaseMessage = releaseMessageService.findLatestReleaseMessageForMessages(
-              Lists
-                  .newArrayList(key));
-          Release latestRelease = releaseService.findLatestActiveRelease(namespaceInfo.get(0),
-              namespaceInfo.get(1),
-              namespaceInfo.get(2));
+          ReleaseMessage latestReleaseMessage = releaseMessageService.findLatestReleaseMessageForMessages(Lists
+                                                                                                              .newArrayList(key));
+          Release latestRelease = releaseService.findLatestActiveRelease(namespaceInfo.get(0), namespaceInfo.get(1),
+                                                                         namespaceInfo.get(2));
 
           transaction.setStatus(Transaction.SUCCESS);
 
-          long notificationId =
-              latestReleaseMessage == null ? ConfigConsts.NOTIFICATION_ID_PLACEHOLDER
-                  : latestReleaseMessage
-                      .getId();
+          long notificationId = latestReleaseMessage == null ? ConfigConsts.NOTIFICATION_ID_PLACEHOLDER : latestReleaseMessage
+              .getId();
 
           if (notificationId == ConfigConsts.NOTIFICATION_ID_PLACEHOLDER && latestRelease == null) {
             return nullConfigCacheEntry;
@@ -213,8 +207,7 @@ public class ConfigServiceWithCache extends AbstractConfigService {
     configIdCache = configIdCacheBuilder.build(new CacheLoader<Long, Optional<Release>>() {
       @Override
       public Optional<Release> load(Long key) throws Exception {
-        Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CACHE_LOAD_ID,
-            String.valueOf(key));
+        Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CACHE_LOAD_ID, String.valueOf(key));
         try {
           Release release = releaseService.findActiveOne(key);
 
@@ -237,7 +230,6 @@ public class ConfigServiceWithCache extends AbstractConfigService {
   }
 
   private static class ConfigCacheEntry {
-
     private final long notificationId;
     private final Release release;
 

@@ -22,7 +22,6 @@ import com.ctrip.framework.apollo.core.ConfigConsts;
 import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
 
 import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
-import com.ctrip.framework.apollo.core.enums.ConfigurationChangeType;
 import com.google.common.base.Strings;
 
 import com.google.common.collect.Lists;
@@ -45,13 +44,11 @@ public abstract class AbstractConfigService implements ConfigService {
   }
 
   @Override
-  public Release loadConfig(String clientAppId, String clientIp, String clientLabel,
-      String configAppId, String configClusterName,
+  public Release loadConfig(String clientAppId, String clientIp, String clientLabel, String configAppId, String configClusterName,
       String configNamespace, String dataCenter, ApolloNotificationMessages clientMessages) {
     // load from specified cluster first
     if (!Objects.equals(ConfigConsts.CLUSTER_NAME_DEFAULT, configClusterName)) {
-      Release clusterRelease = findRelease(clientAppId, clientIp, clientLabel, configAppId,
-          configClusterName, configNamespace,
+      Release clusterRelease = findRelease(clientAppId, clientIp, clientLabel, configAppId, configClusterName, configNamespace,
           clientMessages);
 
       if (Objects.nonNull(clusterRelease)) {
@@ -61,8 +58,7 @@ public abstract class AbstractConfigService implements ConfigService {
 
     // try to load via data center
     if (!Strings.isNullOrEmpty(dataCenter) && !Objects.equals(dataCenter, configClusterName)) {
-      Release dataCenterRelease = findRelease(clientAppId, clientIp, clientLabel, configAppId,
-          dataCenter, configNamespace,
+      Release dataCenterRelease = findRelease(clientAppId, clientIp, clientLabel, configAppId, dataCenter, configNamespace,
           clientMessages);
       if (Objects.nonNull(dataCenterRelease)) {
         return dataCenterRelease;
@@ -70,28 +66,25 @@ public abstract class AbstractConfigService implements ConfigService {
     }
 
     // fallback to default release
-    return findRelease(clientAppId, clientIp, clientLabel, configAppId,
-        ConfigConsts.CLUSTER_NAME_DEFAULT, configNamespace,
+    return findRelease(clientAppId, clientIp, clientLabel, configAppId, ConfigConsts.CLUSTER_NAME_DEFAULT, configNamespace,
         clientMessages);
   }
 
   /**
    * Find release
    *
-   * @param clientAppId       the client's app id
-   * @param clientIp          the client ip
-   * @param clientLabel       the client label
-   * @param configAppId       the requested config's app id
+   * @param clientAppId the client's app id
+   * @param clientIp the client ip
+   * @param clientLabel the client label
+   * @param configAppId the requested config's app id
    * @param configClusterName the requested config's cluster name
-   * @param configNamespace   the requested config's namespace name
-   * @param clientMessages    the messages received in client side
+   * @param configNamespace the requested config's namespace name
+   * @param clientMessages the messages received in client side
    * @return the release
    */
-  private Release findRelease(String clientAppId, String clientIp, String clientLabel,
-      String configAppId, String configClusterName,
+  private Release findRelease(String clientAppId, String clientIp, String clientLabel, String configAppId, String configClusterName,
       String configNamespace, ApolloNotificationMessages clientMessages) {
-    Long grayReleaseId = grayReleaseRulesHolder.findReleaseIdFromGrayReleaseRule(clientAppId,
-        clientIp, clientLabel, configAppId,
+    Long grayReleaseId = grayReleaseRulesHolder.findReleaseIdFromGrayReleaseRule(clientAppId, clientIp, clientLabel, configAppId,
         configClusterName, configNamespace);
 
     Release release = null;
@@ -101,8 +94,7 @@ public abstract class AbstractConfigService implements ConfigService {
     }
 
     if (release == null) {
-      release = findLatestActiveRelease(configAppId, configClusterName, configNamespace,
-          clientMessages);
+      release = findLatestActiveRelease(configAppId, configClusterName, configNamespace, clientMessages);
     }
 
     return release;

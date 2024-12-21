@@ -89,13 +89,13 @@ public class ConfigController {
 
   @GetMapping(value = "/{appId}/{clusterName}/{namespace:.+}")
   public ApolloConfig queryConfig(@PathVariable String appId, @PathVariable String clusterName,
-      @PathVariable String namespace,
-      @RequestParam(value = "dataCenter", required = false) String dataCenter,
-      @RequestParam(value = "releaseKey", defaultValue = "-1") String clientSideReleaseKey,
-      @RequestParam(value = "ip", required = false) String clientIp,
-      @RequestParam(value = "label", required = false) String clientLabel,
-      @RequestParam(value = "messages", required = false) String messagesAsString,
-      HttpServletRequest request, HttpServletResponse response) throws IOException {
+                                  @PathVariable String namespace,
+                                  @RequestParam(value = "dataCenter", required = false) String dataCenter,
+                                  @RequestParam(value = "releaseKey", defaultValue = "-1") String clientSideReleaseKey,
+                                  @RequestParam(value = "ip", required = false) String clientIp,
+                                  @RequestParam(value = "label", required = false) String clientLabel,
+                                  @RequestParam(value = "messages", required = false) String messagesAsString,
+                                  HttpServletRequest request, HttpServletResponse response) throws IOException {
     String originalNamespace = namespace;
     //strip out .properties suffix
     namespace = namespaceUtil.filterNamespaceName(namespace);
@@ -112,8 +112,7 @@ public class ConfigController {
 
     String appClusterNameLoaded = clusterName;
     if (!ConfigConsts.NO_APPID_PLACEHOLDER.equalsIgnoreCase(appId)) {
-      Release currentAppRelease = configService.loadConfig(appId, clientIp, clientLabel, appId,
-          clusterName, namespace,
+      Release currentAppRelease = configService.loadConfig(appId, clientIp, clientLabel, appId, clusterName, namespace,
           dataCenter, clientMessages);
 
       if (currentAppRelease != null) {
@@ -125,8 +124,7 @@ public class ConfigController {
 
     //if namespace does not belong to this appId, should check if there is a public configuration
     if (!namespaceBelongsToAppId(appId, namespace)) {
-      Release publicRelease = this.findPublicConfig(appId, clientIp, clientLabel, clusterName,
-          namespace,
+      Release publicRelease = this.findPublicConfig(appId, clientIp, clientLabel, clusterName, namespace,
           dataCenter, clientMessages);
       if (Objects.nonNull(publicRelease)) {
         releases.add(publicRelease);
@@ -220,9 +218,8 @@ public class ConfigController {
    * @param namespace   the namespace
    * @param dataCenter  the datacenter
    */
-  private Release findPublicConfig(String clientAppId, String clientIp, String clientLabel,
-      String clusterName,
-      String namespace, String dataCenter, ApolloNotificationMessages clientMessages) {
+  private Release findPublicConfig(String clientAppId, String clientIp, String clientLabel, String clusterName,
+                                   String namespace, String dataCenter, ApolloNotificationMessages clientMessages) {
     AppNamespace appNamespace = appNamespaceService.findPublicNamespaceByName(namespace);
 
     //check whether the namespace's appId equals to current one
@@ -232,13 +229,13 @@ public class ConfigController {
 
     String publicConfigAppId = appNamespace.getAppId();
 
-    return configService.loadConfig(clientAppId, clientIp, clientLabel, publicConfigAppId,
-        clusterName, namespace, dataCenter,
+    return configService.loadConfig(clientAppId, clientIp, clientLabel, publicConfigAppId, clusterName, namespace, dataCenter,
         clientMessages);
   }
 
   /**
-   * Merge configurations of releases. Release in lower index override those in higher index
+   * Merge configurations of releases.
+   * Release in lower index override those in higher index
    */
   Map<String, String> mergeReleaseConfigurations(List<Release> releases) {
     Map<String, String> result = Maps.newLinkedHashMap();
@@ -257,7 +254,7 @@ public class ConfigController {
   }
 
   private void auditReleases(String appId, String cluster, String dataCenter, String clientIp,
-      List<Release> releases) {
+                             List<Release> releases) {
     if (Strings.isNullOrEmpty(clientIp)) {
       //no need to audit instance config when there is no ip
       return;
