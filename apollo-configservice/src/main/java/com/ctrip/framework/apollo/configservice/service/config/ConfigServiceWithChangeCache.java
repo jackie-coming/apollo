@@ -51,56 +51,56 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
 
-	private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
+  private static final Logger logger = LoggerFactory.getLogger(ConfigServiceWithChangeCache.class);
 
 
-	private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS = 10;
+  private static final long DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS = 10;
 
-	private static final String TRACER_EVENT_CHANGE_CACHE_LOAD_KEY = "ConfigChangeCache.LoadFromDBbyKey";
+  private static final String TRACER_EVENT_CHANGE_CACHE_LOAD_KEY = "ConfigChangeCache.LoadFromDBbyKey";
 
-	private static final String TRACER_EVENT_CHANGE_CACHE_LOAD = "ConfigChangeCache.LoadFromDB";
+  private static final String TRACER_EVENT_CHANGE_CACHE_LOAD = "ConfigChangeCache.LoadFromDB";
 
 
-	public LoadingCache<String, Optional<Release>> releasesCache;
+  public LoadingCache<String, Optional<Release>> releasesCache;
 
 
   public ConfigServiceWithChangeCache(final ReleaseService releaseService,
-		  final ReleaseMessageService releaseMessageService,
-		  final GrayReleaseRulesHolder grayReleaseRulesHolder,
-		  final BizConfig bizConfig,
-		  final MeterRegistry meterRegistry) {
-
-	  super(releaseService, releaseMessageService, grayReleaseRulesHolder, bizConfig, meterRegistry);
+      final ReleaseMessageService releaseMessageService,
+      final GrayReleaseRulesHolder grayReleaseRulesHolder,
+      final BizConfig bizConfig,
+      final MeterRegistry meterRegistry) {
+		
+    super(releaseService, releaseMessageService, grayReleaseRulesHolder, bizConfig, meterRegistry);
 
   }
 
   @PostConstruct
   public void initialize() {
-	  super.initialize();
-	  buildReleaseCache();
+    super.initialize();
+    buildReleaseCache();
   }
 
-	private void buildReleaseCache() {
+  private void buildReleaseCache() {
 
-		CacheBuilder releasesCacheBuilder = CacheBuilder.newBuilder()
-			  .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS, TimeUnit.SECONDS);
+    CacheBuilder releasesCacheBuilder = CacheBuilder.newBuilder()
+        .expireAfterAccess(DEFAULT_EXPIRED_AFTER_ACCESS_IN_SENCONDS, TimeUnit.SECONDS);
 
-		releasesCache = releasesCacheBuilder.build(new CacheLoader<String, Optional<Release>>() {
+    releasesCache = releasesCacheBuilder.build(new CacheLoader<String, Optional<Release>>() {
       @Override
       public Optional<Release> load(String key) {
-	      Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD_KEY, key);
-	      try {
-		      Release release = releaseService.findByReleaseKey(key);
+        Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD_KEY, key);
+        try {
+          Release release = releaseService.findByReleaseKey(key);
 
-		      transaction.setStatus(Transaction.SUCCESS);
+          transaction.setStatus(Transaction.SUCCESS);
 
-		      return Optional.ofNullable(release);
-	      } catch (Throwable ex) {
-		      transaction.setStatus(ex);
-		      throw ex;
-	      } finally {
-		      transaction.complete();
-	      }
+          return Optional.ofNullable(release);
+        } catch (Throwable ex) {
+          transaction.setStatus(ex);
+          throw ex;
+        } finally {
+          transaction.complete();
+        }
 
       }
     });
@@ -109,28 +109,28 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
   @Override
   public void handleMessage(ReleaseMessage message, String channel) {
     logger.info("message received - channel: {}, message: {}", channel, message);
-	  if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(
-			  message.getMessage())) {
+    if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(
+        message.getMessage())) {
       return;
     }
-	  String messageKey = message.getMessage();
-	  if (bizConfig.isConfigServiceCacheKeyIgnoreCase()) {
-		  messageKey = messageKey.toLowerCase();
-	  }
-	  Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD, messageKey);
+    String messageKey = message.getMessage();
+    if (bizConfig.isConfigServiceCacheKeyIgnoreCase()) {
+      messageKey = messageKey.toLowerCase();
+    }
+    Transaction transaction = Tracer.newTransaction(TRACER_EVENT_CHANGE_CACHE_LOAD, messageKey);
     try {
       List<String> namespaceInfo = ReleaseMessageKeyGenerator.messageToList(messageKey);
-	    Release latestRelease = releaseService.findLatestActiveRelease(namespaceInfo.get(0),
-			    namespaceInfo.get(1), namespaceInfo.get(2));
+      Release latestRelease = releaseService.findLatestActiveRelease(namespaceInfo.get(0),
+          namespaceInfo.get(1), namespaceInfo.get(2));
 
-	    releasesCache.put(latestRelease.getReleaseKey(), Optional.ofNullable(latestRelease));
+      releasesCache.put(latestRelease.getReleaseKey(), Optional.ofNullable(latestRelease));
 
-	    transaction.setStatus(Transaction.SUCCESS);
+      transaction.setStatus(Transaction.SUCCESS);
     } catch (Throwable ex) {
-	    transaction.setStatus(ex);
+      transaction.setStatus(ex);
       //ignore
     } finally {
-	    transaction.complete();
+      transaction.complete();
     }
   }
 
@@ -138,17 +138,17 @@ public class ConfigServiceWithChangeCache extends ConfigServiceWithCache {
   public Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys) {
     try {
 
-	    ImmutableMap<String, Optional<Release>> releases = releasesCache.getAll(releaseKeys);
+      ImmutableMap<String, Optional<Release>> releases = releasesCache.getAll(releaseKeys);
 
-	    Map<String, Release> filterReleases = releases.entrySet().stream()
-			    .filter(entry -> entry.getValue().isPresent())
-			    .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get()));
-	    //find all keys
-	    if (releaseKeys.size() == filterReleases.size()) {
-		    return filterReleases;
+      Map<String, Release> filterReleases = releases.entrySet().stream()
+          .filter(entry -> entry.getValue().isPresent())
+          .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get()));
+      //find all keys
+      if (releaseKeys.size() == filterReleases.size()) {
+        return filterReleases;
       }
     } catch (ExecutionException e) {
-	    //ignore
+      //ignore
     }
     return null;
   }

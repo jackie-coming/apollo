@@ -47,10 +47,12 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ConfigServiceWithChangeCacheTest {
+
   private ConfigServiceWithChangeCache configServiceWithChangeCache;
 
   @Mock
   private ReleaseService releaseService;
+
   @Mock
   private ReleaseMessageService releaseMessageService;
   @Mock
@@ -73,19 +75,21 @@ public class ConfigServiceWithChangeCacheTest {
 
   @Before
   public void setUp() throws Exception {
-    configServiceWithChangeCache = new ConfigServiceWithChangeCache(releaseService, releaseMessageService,
-                                                                    grayReleaseRulesHolder, bizConfig, meterRegistry);
+    configServiceWithChangeCache = new ConfigServiceWithChangeCache(releaseService,
+        releaseMessageService,
+        grayReleaseRulesHolder, bizConfig, meterRegistry);
 
     configServiceWithChangeCache.initialize();
 
-    someReleaseKey="someReleaseKey";
+    someReleaseKey = "someReleaseKey";
     someAppId = "someAppId";
     someClusterName = "someClusterName";
     someNamespaceName = "someNamespaceName";
 
-    someKey= ReleaseMessageKeyGenerator.generate(someAppId, someClusterName, someNamespaceName);
+    someKey = ReleaseMessageKeyGenerator.generate(someAppId, someClusterName, someNamespaceName);
 
   }
+
   @Test
   public void testChangeConfigurationsWithAdd() {
     String key1 = "key1";
@@ -94,33 +98,34 @@ public class ConfigServiceWithChangeCacheTest {
     String key2 = "key2";
     String value2 = "value2";
 
-    Map<String, String> latestConfig = ImmutableMap.of(key1, value1,key2, value2);
+    Map<String, String> latestConfig = ImmutableMap.of(key1, value1, key2, value2);
     Map<String, String> historyConfig = ImmutableMap.of(key1, value1);
 
     List<ConfigurationChange> result =
-            configServiceWithChangeCache.calcConfigurationChanges(latestConfig, historyConfig);
+        configServiceWithChangeCache.calcConfigurationChanges(latestConfig, historyConfig);
 
     assertEquals(1, result.size());
     assertEquals(key2, result.get(0).getKey());
     assertEquals(value2, result.get(0).getNewValue());
     assertEquals("ADDED", result.get(0).getConfigurationChangeType());
   }
+
   @Test
   public void testChangeConfigurationsWithLatestConfigIsNULL() {
     String key1 = "key1";
     String value1 = "value1";
 
-
     Map<String, String> historyConfig = ImmutableMap.of(key1, value1);
 
     List<ConfigurationChange> result =
-            configServiceWithChangeCache.calcConfigurationChanges(null, historyConfig);
+        configServiceWithChangeCache.calcConfigurationChanges(null, historyConfig);
 
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(null, result.get(0).getNewValue());
     assertEquals("DELETED", result.get(0).getConfigurationChangeType());
   }
+
   @Test
   public void testChangeConfigurationsWithHistoryConfigIsNULL() {
     String key1 = "key1";
@@ -129,13 +134,14 @@ public class ConfigServiceWithChangeCacheTest {
     Map<String, String> latestConfig = ImmutableMap.of(key1, value1);
 
     List<ConfigurationChange> result =
-            configServiceWithChangeCache.calcConfigurationChanges(latestConfig, null);
+        configServiceWithChangeCache.calcConfigurationChanges(latestConfig, null);
 
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(value1, result.get(0).getNewValue());
     assertEquals("ADDED", result.get(0).getConfigurationChangeType());
   }
+
   @Test
   public void testChangeConfigurationsWithUpdate() {
     String key1 = "key1";
@@ -147,13 +153,14 @@ public class ConfigServiceWithChangeCacheTest {
     Map<String, String> historyConfig = ImmutableMap.of(key1, value1);
 
     List<ConfigurationChange> result =
-            configServiceWithChangeCache.calcConfigurationChanges(latestConfig, historyConfig);
+        configServiceWithChangeCache.calcConfigurationChanges(latestConfig, historyConfig);
 
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
     assertEquals(anotherValue1, result.get(0).getNewValue());
     assertEquals("MODIFIED", result.get(0).getConfigurationChangeType());
   }
+
   @Test
   public void testChangeConfigurationsWithDelete() {
     String key1 = "key1";
@@ -163,7 +170,7 @@ public class ConfigServiceWithChangeCacheTest {
     Map<String, String> historyConfig = ImmutableMap.of(key1, value1);
 
     List<ConfigurationChange> result =
-            configServiceWithChangeCache.calcConfigurationChanges(latestConfig, historyConfig);
+        configServiceWithChangeCache.calcConfigurationChanges(latestConfig, historyConfig);
 
     assertEquals(1, result.size());
     assertEquals(key1, result.get(0).getKey());
@@ -174,11 +181,12 @@ public class ConfigServiceWithChangeCacheTest {
   @Test
   public void testFindReleasesByReleaseKeys() {
     when(releaseService.findByReleaseKey(someReleaseKey)).thenReturn
-            (someRelease);
+        (someRelease);
 
-    Map<String,Release> someReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(Sets.newHashSet(someReleaseKey));
-    Map<String,Release> anotherReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(Sets.newHashSet(someReleaseKey));
-
+    Map<String, Release> someReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(
+        Sets.newHashSet(someReleaseKey));
+    Map<String, Release> anotherReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(
+        Sets.newHashSet(someReleaseKey));
 
     int retryTimes = 100;
 
@@ -195,11 +203,12 @@ public class ConfigServiceWithChangeCacheTest {
   @Test
   public void testFindReleasesByReleaseKeysWithReleaseNotFound() {
     when(releaseService.findByReleaseKey(someReleaseKey)).thenReturn
-            (null);
+        (null);
 
-    Map<String,Release> someReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(Sets.newHashSet(someReleaseKey));
-    Map<String,Release> anotherReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(Sets.newHashSet(someReleaseKey));
-
+    Map<String, Release> someReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(
+        Sets.newHashSet(someReleaseKey));
+    Map<String, Release> anotherReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(
+        Sets.newHashSet(someReleaseKey));
 
     int retryTimes = 100;
 
@@ -217,13 +226,16 @@ public class ConfigServiceWithChangeCacheTest {
   public void testFindReleasesByReleaseKeysWithReleaseMessageNotification() {
     ReleaseMessage someReleaseMessage = mock(ReleaseMessage.class);
 
-    when(releaseService.findLatestActiveRelease(someAppId,someClusterName,someNamespaceName)).thenReturn(someRelease);
+    when(releaseService.findLatestActiveRelease(someAppId, someClusterName,
+        someNamespaceName)).thenReturn(someRelease);
     when(someReleaseMessage.getMessage()).thenReturn(someKey);
     when(someRelease.getReleaseKey()).thenReturn(someReleaseKey);
 
     configServiceWithChangeCache.handleMessage(someReleaseMessage, Topics.APOLLO_RELEASE_TOPIC);
-    Map<String,Release> someReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(Sets.newHashSet(someReleaseKey));
-    Map<String,Release> anotherReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(Sets.newHashSet(someReleaseKey));
+    Map<String, Release> someReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(
+        Sets.newHashSet(someReleaseKey));
+    Map<String, Release> anotherReleaseMap = configServiceWithChangeCache.findReleasesByReleaseKeys(
+        Sets.newHashSet(someReleaseKey));
 
     assertEquals(someRelease, someReleaseMap.get(someReleaseKey));
     assertEquals(someRelease, anotherReleaseMap.get(someReleaseKey));

@@ -27,18 +27,18 @@ import java.util.Set;
  */
 public interface IncrementalSyncConfigService {
 
-    /**
-     * @param latestReleaseConfigurations
-     * @param historyConfigurations
-     * @return the ConfigurationChanges
-     */
-    List<ConfigurationChange> calcConfigurationChanges(
-        Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations);
+  /**
+   * @param latestReleaseConfigurations
+   * @param historyConfigurations
+   * @return the ConfigurationChanges
+   */
+  List<ConfigurationChange> calcConfigurationChanges(
+      Map<String, String> latestReleaseConfigurations, Map<String, String> historyConfigurations);
 
-    /**
-     * @param releaseKeys
-     * @return the ReleaseMap
-     */
-    Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys);
+  /**
+   * @param releaseKeys
+   * @return the ReleaseMap
+   */
+  Map<String, Release> findReleasesByReleaseKeys(Set<String> releaseKeys);
 
 }
