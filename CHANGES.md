@@ -22,6 +22,10 @@ Apollo 2.4.0
 * [Fix: ensure clusters order in envClusters open api](https://github.com/apolloconfig/apollo/pull/5277)
 * [Fix: bump xstream from 1.4.20 to 1.4.21 to fix CVE-2024-47072](https://github.com/apolloconfig/apollo/pull/5280)
 * [Feature: highlight diffs for properties](https://github.com/apolloconfig/apollo/pull/5282)
+* [Feature: Add rate limiting function to ConsumerToken](https://github.com/apolloconfig/apollo/pull/5267)
+* [Feature: add JSON formatting function in apollo-portal](https://github.com/apolloconfig/apollo/pull/5287)
+* [Fix: add missing url patterns for AdminServiceAuthenticationFilter](https://github.com/apolloconfig/apollo/pull/5291)
+* [Fix: support java.time.Instant serialization with gson](https://github.com/apolloconfig/apollo/pull/5298)
 
 ------------------
 All issues and pull requests are [here](https://github.com/apolloconfig/apollo/milestone/15?closed=1)
