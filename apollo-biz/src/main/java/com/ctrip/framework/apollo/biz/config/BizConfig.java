@@ -241,7 +241,7 @@ public class BizConfig extends RefreshableConfig {
   }
 
   public boolean isConfigServiceChangeCacheEnabled() {
-    return getBooleanProperty("config-service.change.cache.enabled", false);
+    return getBooleanProperty("config-service.incremental.change.enabled", false);
   }
 
 

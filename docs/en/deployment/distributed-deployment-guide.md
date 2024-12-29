@@ -1638,7 +1638,7 @@ json
 ```
 The above configuration specifies that the retention size for release history of appId=kl, clusterName=bj, namespaceName=namespace1, and branchName=bj is 10, and the retention size for release history of appId=kl, clusterName=bj, namespaceName=namespace2, and branchName=bj is 20. In general, branchName equals clusterName. It is only different during gray release, where the branchName needs to be confirmed by querying the ReleaseHistory table in the database.
 
-### 3.2.14 config-service.change.cache.enabled - whether to enable incremental configuration synchronization client
+### 3.2.14 config-service.incremental.change.enabled - whether to enable incremental configuration synchronization client
 
 > for server versions 2.4.0 and above && client versions 2.3.0 and above
 
