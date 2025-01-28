@@ -70,13 +70,13 @@ public class ConfigServiceAutoConfiguration {
 
   @Bean
   public ConfigService configService() {
+    if (bizConfig.isConfigServiceIncrementalChangeEnabled()) {
+      return new ConfigServiceWithChangeCache(releaseService, releaseMessageService,
+          grayReleaseRulesHolder(), bizConfig, meterRegistry);
+    }
     if (bizConfig.isConfigServiceCacheEnabled()) {
       return new ConfigServiceWithCache(releaseService, releaseMessageService,
           grayReleaseRulesHolder(), bizConfig, meterRegistry);
-    }
-    if(bizConfig.isConfigServiceChangeCacheEnabled()){
-      return new ConfigServiceWithChangeCache(releaseService, releaseMessageService,
-		      grayReleaseRulesHolder(), bizConfig, meterRegistry);
     }
     return new DefaultConfigService(releaseService, grayReleaseRulesHolder());
   }

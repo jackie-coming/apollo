@@ -28,7 +28,6 @@ import com.ctrip.framework.apollo.core.dto.ApolloConfig;
 import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
 import com.ctrip.framework.apollo.core.dto.ConfigurationChange;
 import com.ctrip.framework.apollo.core.enums.ConfigSyncType;
-import com.ctrip.framework.apollo.core.enums.ConfigurationChangeType;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -538,7 +537,7 @@ public class ConfigControllerTest {
 
   @Test
   public void testQueryConfigWithIncrementalSync() throws Exception {
-    when(bizConfig.isConfigServiceChangeCacheEnabled())
+    when(bizConfig.isConfigServiceIncrementalChangeEnabled())
         .thenReturn(true);
     String clientSideReleaseKey = "1";
     String someConfigurations = "{\"apollo.public.foo\": \"foo\"}";
@@ -567,14 +566,14 @@ public class ConfigControllerTest {
     ApolloConfig anotherResult = configController.queryConfig(someAppId, someClusterName,
         defaultNamespaceName, someDataCenter, clientSideReleaseKey,
         someClientIp, someClientLabel, someMessagesAsString, someRequest, someResponse);
-    assertEquals(ConfigSyncType.INCREMENTALSYNC.getValue(), anotherResult.getConfigSyncType());
+    assertEquals(ConfigSyncType.INCREMENTAL_SYNC.getValue(), anotherResult.getConfigSyncType());
     assertEquals(configurationChanges, anotherResult.getConfigurationChanges());
 
   }
 
   @Test
   public void testQueryConfigWithIncrementalSyncNotFound() throws Exception {
-    when(bizConfig.isConfigServiceChangeCacheEnabled())
+    when(bizConfig.isConfigServiceIncrementalChangeEnabled())
         .thenReturn(true);
 
     String someClientSideReleaseKey = "1";
@@ -601,7 +600,7 @@ public class ConfigControllerTest {
 
   @Test
   public void testQueryConfigWithIncrementalSyncPublicNamespaceAndAppOverride() throws Exception {
-    when(bizConfig.isConfigServiceChangeCacheEnabled())
+    when(bizConfig.isConfigServiceIncrementalChangeEnabled())
         .thenReturn(true);
     String someAppClientSideReleaseKey = "1";
     String somePublicAppClientSideReleaseKey = "2";
@@ -666,7 +665,7 @@ public class ConfigControllerTest {
     assertEquals(Joiner.on(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR)
             .join(someAppServerSideReleaseKey, somePublicAppSideReleaseKey),
         result.getReleaseKey());
-    assertEquals(ConfigSyncType.INCREMENTALSYNC.getValue(), result.getConfigSyncType());
+    assertEquals(ConfigSyncType.INCREMENTAL_SYNC.getValue(), result.getConfigSyncType());
     assertEquals(configurationChanges, result.getConfigurationChanges());
   }
 

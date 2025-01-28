@@ -36,6 +36,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.util.regex.Pattern;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -159,9 +160,11 @@ public class ConfigController {
 
     Map<String, String> latestConfigurations = mergeReleaseConfigurations(releases);
 
-    if (bizConfig.isConfigServiceChangeCacheEnabled()) {
+    if (bizConfig.isConfigServiceIncrementalChangeEnabled()) {
       LinkedHashSet<String> clientSideReleaseKeys = Sets.newLinkedHashSet(
-          Arrays.stream(clientSideReleaseKey.split("\\+")).collect(Collectors.toList()));
+          Arrays.stream(
+                  clientSideReleaseKey.split(Pattern.quote(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR)))
+              .collect(Collectors.toList()));
 
       Map<String, Release> historyReleases = configService.findReleasesByReleaseKeys(
           clientSideReleaseKeys);
@@ -184,7 +187,7 @@ public class ConfigController {
 
         apolloConfig.setConfigurationChanges(configurationChanges);
 
-        apolloConfig.setConfigSyncType(ConfigSyncType.INCREMENTALSYNC.getValue());
+        apolloConfig.setConfigSyncType(ConfigSyncType.INCREMENTAL_SYNC.getValue());
         return apolloConfig;
       }
 
